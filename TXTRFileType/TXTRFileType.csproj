@@ -1,0 +1,111 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyTrademarkAttribute>false</GenerateAssemblyTrademarkAttribute>
+    <GenerateAssemblyCultureAttribute>false</GenerateAssemblyCultureAttribute>
+    <GenerateAssemblyComVisibleAttribute>false</GenerateAssemblyComVisibleAttribute>
+    <GenerateAssemblyGuidAttribute>false</GenerateAssemblyGuidAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    <GenerateSupportedOSPlatformAttribute>false</GenerateSupportedOSPlatformAttribute>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Platforms>AnyCPU</Platforms>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\ManagedSquish\ManagedSquish.csproj" />
+  </ItemGroup>
+
+  <!-- Ensure "SaveConfigWidget.cs" is compiled as a WinForms UserControl -->
+  <ItemGroup>
+    <Compile Update="SaveConfigWidget.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+  
+  <!-- ENVIRONMENT VARIABLE DEPENDENT PROPERTIES -->
+  
+  <!-- Set the environment variable "PDNINSTALLDIR" to the path of your Paint.NET install directory. -->
+  <!-- This is required for the PostBuild event and for the paint.net DLL references. -->
+  <!-- Example: SETX PDNINSTALLDIR "C:\Program Files\paint.net" -->
+  
+  <!-- Set the environment variable "PDNENABLEPBE" to 'true' to enable post build event and set to 'false' disable it. -->
+  <!-- This is required to be disabled to prevent publish templates from failing. Otherwise, enable it for debugging. -->
+  <!-- Example: SETX PDNENABLEPBE "true" -->
+  
+  <!-- Set the environment variable "PDNPLUGINTYPE" to "FileType" or "Effect" according to what type of plugin you are making. -->
+  <!-- This is required to prevent post build event from failing. -->
+  <!-- Example: SETX PDNPLUGINTYPE "FileType" -->
+
+  <!-- Start Paint.NET when you start debugger. -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <StartAction>Program</StartAction>
+    <StartProgram>$(PDNINSTALLDIR)\PaintDotNet.exe</StartProgram>
+    <StartWorkingDirectory>$(PDNINSTALLDIR)\</StartWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <StartAction>Program</StartAction>
+    <StartProgram>$(PDNINSTALLDIR)\PaintDotNet.exe</StartProgram>
+    <StartWorkingDirectory>$(PDNINSTALLDIR)\</StartWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <StartAction>Program</StartAction>
+    <StartProgram>$(PDNINSTALLDIR)\PaintDotNet.exe</StartProgram>
+    <StartWorkingDirectory>$(PDNINSTALLDIR)\</StartWorkingDirectory>
+  </PropertyGroup>
+
+  <!-- Copy plugin DLL to Paint.NET plugins directory. -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(PDNENABLEPBE)' != 'false'">
+    <Exec Command="IF NOT EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; mkdir &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot;&#xD;&#xA;IF EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; (&#xD;&#xA;  IF EXIST &quot;$(TargetPath)&quot; (&#xD;&#xA;    COPY /Y /B &quot;$(TargetPath)&quot; /B &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; /B&#xD;&#xA;  ) ELSE (&#xD;&#xA;    ECHO ERROR: Failed to copy plugin to plugin directory! Check the build log.&#xD;&#xA;    EXIT /B 1&#xD;&#xA;  )&#xD;&#xA;) ELSE (&#xD;&#xA;  ECHO ERROR: Failed to create plugin directory! Check the build log.&#xD;&#xA;  EXIT /B 1&#xD;&#xA;)" />
+  </Target>
+
+  <!-- Reference Paint.NET DLLs. -->
+  <ItemGroup>
+    <Reference Include="PaintDotNet.Base" Condition="'$(PDNInstallDir)' != ''">
+      <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Core">
+      <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Data">
+      <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Data.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
