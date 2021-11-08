@@ -31,14 +31,14 @@ namespace TXTRFileType.IO
 
         /// <summary>
         /// Read a null terminated string<br/>
-        /// WARNING: This will read all the way to EOF if there is no null terminator
+        /// <strong>WARNING: This will read all the way to EOF if there is no null terminator</strong>
         /// </summary>
         /// <returns>The string without its null terminator</returns>
-        public string ReadNullTerminatedString() => ReadCString(int.MaxValue, true);
+        public override string ReadString() => ReadString(int.MaxValue, true);
 
-        public string ReadASCIIString(int length) => ReadCString(length, false);
+        public string ReadString(int length) => ReadString(length, false);
 
-        private string ReadCString(int length, bool nullTerminated)
+        private string ReadString(int length, bool nullTerminated)
         {
             if (length > 0)
             {
@@ -47,22 +47,25 @@ namespace TXTRFileType.IO
                 for (int _ = 0; _ < length; _++)
                 {
                     c = ReadChar();
-                    if (nullTerminated && (c == 0x00))
+                    if (nullTerminated && c == (Encoding == Encoding.ASCII ? 0x00 : 0x0000))
                         break;
                     else
                         str.Append(c);
                 }
+                // Do not seek backwards as the null terminator is part of the string even if it's not included in the result
                 return str.ToString();
             }
             else
                 return "";
         }
 
+        public string ReadDotNetString() => base.ReadString();
+
         public string ReadAssetID() => ReadAssetID(assetIdLength);
 
-        public string ReadAssetID(AssetIDLength assetIdLength) => ReadASCIIString((int)assetIdLength);
+        public string ReadAssetID(AssetIDLength assetIdLength) => ReadString((int)assetIdLength);
 
-        public string ReadFourCC() => ReadASCIIString(4);
+        public string ReadFourCC() => ReadString(4);
 
         public void Align32() => Align(31);
 

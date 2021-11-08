@@ -5,6 +5,19 @@ namespace TXTRFileType.Extensions
 {
     public static class BinaryReaderExtensions
     {
+        public static byte[] ReadAllBytes(this BinaryReader @this)
+        {
+            const int bufferSize = 4096;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                byte[] buffer = new byte[bufferSize];
+                int count;
+                while ((count = @this.Read(buffer, 0, buffer.Length)) != 0)
+                    ms.Write(buffer, 0, count);
+                return ms.ToArray();
+            }
+        }
+
         public static short[] ReadInt16(this BinaryReader @this, int count)
         {
             short[] output = new short[count];

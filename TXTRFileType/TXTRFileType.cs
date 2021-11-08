@@ -268,7 +268,7 @@ namespace TXTRFileType
                             }
                             break;
                         default:
-                            throw new NotSupportedException($"Palette format '{paletteFormat}' ({paletteFormat:X}) is not supported");
+                            throw new NotSupportedException($"Palette format '{paletteFormat}' ({paletteFormat:X8}) is not supported");
                     }
                 }
                 if (paletteSize != 0 && paletteData.Length == 0)
@@ -279,12 +279,12 @@ namespace TXTRFileType
                 for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
                 {
                     Debug.WriteLine("Decoding mipmap {0}: width = {1}, height = {2}", mipLevel + 1, mipWidth, mipHeight);
-                    if (mipWidth < 1 || mipHeight < 1)
+                    if (mipWidth < 2 || mipHeight < 2)
                         throw new InvalidOperationException($"Mip {mipLevel + 1}: Width or Height less than 4. Mipmap count may be invalid.");
                     // Would be mipWidth and mipHeight but Paint.NET doesn't allow layers smaller than the image size.
                     BitmapLayer layer = PDNUtil.CreateLayer(textureWidth, textureHeight, $"Mipmap {mipLevel + 1}");
                     (ushort blockWidth, ushort blockHeight) = Texture.GetBlockDimensions(textureFormat);
-                    (ushort blockWidthSize, ushort blockHeightSize) = Texture.GetBlockSize(textureFormat, mipWidth, mipHeight, blockWidth, blockHeight);
+                    (ushort blockWidthSize, ushort blockHeightSize) = Texture.GetBlockSize(mipWidth, mipHeight, blockWidth, blockHeight);
 
                     switch (textureFormat)
                     {
@@ -303,12 +303,12 @@ namespace TXTRFileType
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
                                             {
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y,
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
                                                     Texture.Convert4To8((byte)(src[x / 2] >> ((x & 1) != 0 ? 0 : 4) & 0xf)),
                                                     0,
                                                     0,
                                                     255,
-                                                    PDNUtil.ColorOptions.G_TO_R | PDNUtil.ColorOptions.B_TO_R);
+                                                    PDNUtil.ColorOptions.R_TO_G | PDNUtil.ColorOptions.R_TO_B);
                                                 /*ColorBgra pixel = layer.Surface[baseX + x, baseY + y];
                                                 pixel.R = Texture.Convert4To8((byte)(src[x / 2] >> ((x & 1) != 0 ? 0 : 4) & 0xf));
                                                 pixel.G = pixel.R;
@@ -336,7 +336,7 @@ namespace TXTRFileType
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
                                             {
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, src[x], src[x], src[x], 255);
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true, src[x], src[x], src[x], 255);
                                                 /*ColorBgra pixel = layer.Surface[baseX + x, baseY + y];
                                                 pixel.R = src[x];
                                                 pixel.G = src[x];
@@ -364,7 +364,7 @@ namespace TXTRFileType
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
                                             {
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y,
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
                                                     Texture.Convert4To8((byte)(src[x] >> 4 & 0xF)),
                                                     0,
                                                     0,
@@ -398,7 +398,7 @@ namespace TXTRFileType
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
                                             {
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y,
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
                                                     (byte)(src[x] >> 8),
                                                     0,
                                                     0,
@@ -431,7 +431,7 @@ namespace TXTRFileType
                                         {
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y,
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
                                                     paletteData[src[x / 2] >> ((x & 1) != 0 ? 0 : 4) & 0xF]);
                                                 //layer.Surface[baseX + x, baseY + y] = paletteData[src[x / 2] >> ((x & 1) != 0 ? 0 : 4) & 0xF];
                                         }
@@ -453,7 +453,7 @@ namespace TXTRFileType
                                         {
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, paletteData[src[x]]);
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true, paletteData[src[x]]);
                                                 //layer.Surface[baseX + x, baseY + y] = paletteData[src[x]];
                                         }
                                     }
@@ -475,7 +475,7 @@ namespace TXTRFileType
                                         {
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, paletteData[src[x] << 2]);
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true, paletteData[src[x] << 2]);
                                                 //layer.Surface[baseX + x, baseY + y] = paletteData[src[x] << 2];
                                         }
                                     }
@@ -497,7 +497,7 @@ namespace TXTRFileType
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
                                             {
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y,
+                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
                                                     Texture.Convert5To8((byte)(texel >> 11 & 0x1F)),
                                                     Texture.Convert6To8((byte)(texel >> 5 & 0x3F)),
                                                     Texture.Convert5To8((byte)(texel & 0x1F)),
@@ -537,7 +537,7 @@ namespace TXTRFileType
                                                     pixel.G = Texture.Convert5To8((byte)(texel >> 5 & 0x1F));
                                                     pixel.B = Texture.Convert5To8((byte)(texel & 0x1F));
                                                     pixel.A = 0xFF;*/
-                                                    PDNUtil.SetPixel(ref layer, baseX + x, baseY + y,
+                                                    PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
                                                         Texture.Convert5To8((byte)(texel >> 10 & 0x1F)),
                                                         Texture.Convert5To8((byte)(texel >> 5 & 0x1F)),
                                                         Texture.Convert5To8((byte)(texel & 0x1F)),
@@ -550,7 +550,7 @@ namespace TXTRFileType
                                                     pixel.G = Texture.Convert4To8((byte)(texel >> 4 & 0xF));
                                                     pixel.B = Texture.Convert4To8((byte)(texel & 0xF));
                                                     pixel.A = Texture.Convert3To8((byte)(texel >> 12 & 0x7));*/
-                                                    PDNUtil.SetPixel(ref layer, baseX + x, baseY + y,
+                                                    PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
                                                         Texture.Convert4To8((byte)(texel >> 8 & 0xF)),
                                                         Texture.Convert4To8((byte)(texel >> 4 & 0xF)),
                                                         Texture.Convert4To8((byte)(texel & 0xF)),
@@ -582,7 +582,11 @@ namespace TXTRFileType
                                                 {
                                                     if (c != 0)
                                                     {
-                                                        PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, 0, src[x * 2], src[x * 2 + 1], 0,
+                                                        PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
+                                                            0,
+                                                            src[x * 2],
+                                                            src[x * 2 + 1],
+                                                            0,
                                                             PDNUtil.ColorOptions.KEEP_R | PDNUtil.ColorOptions.KEEP_A);
                                                         /*ColorBgra pixel = layer.Surface[baseX + x, baseY + y];
                                                         pixel.G = src[x * 2];
@@ -591,7 +595,11 @@ namespace TXTRFileType
                                                     }
                                                     else
                                                     {
-                                                        PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, src[x * 2 + 1], 0, 0, src[x * 2],
+                                                        PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true,
+                                                            src[x * 2 + 1],
+                                                            0,
+                                                            0,
+                                                            src[x * 2],
                                                             PDNUtil.ColorOptions.KEEP_G | PDNUtil.ColorOptions.KEEP_B);
                                                         /*ColorBgra pixel = layer.Surface[baseX + x, baseY + y];
                                                         pixel.A = src[x * 2];
@@ -607,22 +615,64 @@ namespace TXTRFileType
                             }
                             break;
                         case TextureFormat.CMPR:
+                            /*byte[] src2 = Squish.DecompressImage(br.ReadBytes(mipWidth * mipHeight), mipWidth, mipHeight, SquishFlags.Dxt1GCN);
+                            int stride = 4 * (mipWidth * 4 + 31) / 32;
+                            int curRowOffs = 0;
+                            for (int y = 0; y < mipHeight; y++)
+                            {
+                                // Set offset to start of current row
+                                int curOffs = curRowOffs;
+                                for (int x = 0; x < mipWidth; x++)
+                                {
+                                    PDNUtil.SetPixel(ref layer, x, y, false, true, new ColorBgra()
+                                    {
+                                        R = src2[curOffs],
+                                        G = src2[curOffs + 1],
+                                        B = src2[curOffs + 2],
+                                        A = src2[curOffs + 3]
+                                    });
+
+                                    // Increase offset to next colour
+                                    curOffs += 4;
+                                }
+                                // Increase row offset
+                                curRowOffs += stride;
+                            }*/
                             for (int blockY = 0; blockY < blockHeightSize; ++blockY)
                             {
                                 int baseY = blockY * blockHeight;
                                 for (int blockX = 0; blockX < blockWidthSize; ++blockX)
                                 {
                                     int baseX = blockX * blockWidth;
+                                    // 4x4 pixels * 4 * 1byte channels = 64byte
+                                    byte[] src = Squish.Decompress(br.ReadBytes(8), SquishFlags.Dxt1GCN);
                                     for (int y = 0; y < blockHeight; ++y)
                                     {
-                                        byte[] src = br.ReadBytes(8);
-                                        byte[] dst = Squish.Decompress(src, SquishFlags.Dxt1GCN);
                                         for (int x = 0; x < blockWidth; ++x)
                                         {
                                             // Only write valid pixels (extraneous pixels from GX blocks ignored)
                                             if (baseX + x <= mipWidth - 1 && baseY + y <= mipHeight - 1)
                                             {
-                                                PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, dst[x], dst[x + 1], dst[x + 2], dst[x + 3]);
+                                                for (int sx = 0; x < 4; sx++)
+                                                {
+                                                    for (int sy = 0; y < 4; sy++)
+                                                    {
+                                                        PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true, new ColorBgra()
+                                                        {
+                                                            R = src[sy],
+                                                            G = src[sy + 1],
+                                                            B = src[sy + 2],
+                                                            A = src[sy + 3]
+                                                        });
+                                                    }
+                                                }
+                                                /*PDNUtil.SetPixel(ref layer, baseX + x, baseY + y, false, true, new ColorBgra()
+                                                {
+                                                    R = (byte)(((src[(y * 4 + x)] >> 24) & 0xFF) / 255),
+                                                    G = (byte)(((src[(y * 4 + x)] >> 16) & 0xFF) / 255),
+                                                    B = (byte)(((src[(y * 4 + x)] >> 8) & 0xFF) / 255),
+                                                    A = (byte)((src[(y * 4 + x)] & 0xFF) / 255)
+                                                });*/
                                                 /*ColorBgra pixel = layer.Surface[baseX + x, baseY + y];
                                                 pixel.R = dst[x];
                                                 pixel.G = dst[x + 1];
@@ -686,7 +736,7 @@ namespace TXTRFileType
                             }*/
                             break;
                         default:
-                            throw new NotSupportedException($"Texture format '{textureFormat}' ({textureFormat:X}) is not supported");
+                            throw new NotSupportedException($"Texture format '{textureFormat}' ({textureFormat:X8}) is not supported");
                     }
 
                     doc.Layers.Add(layer);
