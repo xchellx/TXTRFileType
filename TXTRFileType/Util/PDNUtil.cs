@@ -223,42 +223,5 @@ namespace TXTRFileType.Util
         }
 
         #endregion
-
-        /*// new byte[64] = {
-        //     r1, g1, b1, a1,
-        //     r2, g2, b2, a2,
-        //     r3, g3, b3, a3,
-        //     r4, g4, b4, a4,
-        //     r5, g5, b5, a5,
-        //     r6, g6, b6, a6,
-        //     r7, g7, b7, a7,
-        //     r8, g8, b8, a8,
-        //     r9, g9, b9, a9,
-        //     r10, g10, b10, a10,
-        //     r11, g11, b11, a11,
-        //     r12, g12, b12, a12,
-        //     r13, g13, b13, a13,
-        //     r14, g14, b14, a14,
-        //     r15, g15, b15, a15,
-        //     r16, g16, b16, a16,
-        // }
-        private static ushort GetColorChannel16Bits(byte[] color, int channel, int offset)
-        {
-            byte[] arr = new byte[16];
-            for (int pos = 0, offs = offset; offs < 16 + offset; pos++, offs += offset)
-                byte
-            *//*BitConverter.ToUInt16(new byte[] { color[offset + 0], color[offset + 4], color[offset + 8], color[offset + 12],
-                color[offset + 16], color[offset + 20], color[offset + 24], color[offset + 28],
-                color[offset + 0], color[offset + 4], color[offset + 8], color[offset + 12],
-                color[offset + 16], color[offset + 20], color[offset + 24], color[offset + 28],}, 0);*//*
-        }
-
-        public static ColorBgra Convert16BitColorTo8BitColor(byte[] color)
-            => Convert16BitColorTo8BitColor(GetColorChannel16Bits(color, 0));
-
-        public static ColorBgra Convert16BitColorTo8BitColor(ushort r, ushort g, ushort b, ushort a)
-        {
-            new ColorBgra() { R = r, G = g, B = b, A = a };
-        }*/
     }
 }

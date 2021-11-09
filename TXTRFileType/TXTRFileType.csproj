@@ -49,7 +49,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\ManagedSquish\ManagedSquish.csproj" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
 
   <!-- Ensure "SaveConfigWidget.cs" is compiled as a WinForms UserControl -->

@@ -1,4 +1,4 @@
-﻿namespace TXTRFileType.GX
+﻿namespace libWiiSharp.GX
 {
     public enum TextureFormat : uint
     {

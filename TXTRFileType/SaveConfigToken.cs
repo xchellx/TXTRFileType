@@ -1,4 +1,5 @@
-﻿using PaintDotNet;
+﻿using libWiiSharp.GX;
+using PaintDotNet;
 using System;
 
 namespace TXTRFileType
@@ -6,13 +7,13 @@ namespace TXTRFileType
     [Serializable]
     internal class TXTRFileTypeSaveConfigToken : SaveConfigToken
     {
-        public GX.TextureFormat TextureFormat { get; set; }
-        public GX.PaletteFormat TexturePalette { get; set; }
+        public TextureFormat TextureFormat { get; set; }
+        public PaletteFormat TexturePalette { get; set; }
 
         public TXTRFileTypeSaveConfigToken()
         {
-            TextureFormat = GX.TextureFormat.I4;
-            TexturePalette = GX.PaletteFormat.IA8;
+            TextureFormat = TextureFormat.I4;
+            TexturePalette = PaletteFormat.IA8;
         }
 
         public override object Clone()

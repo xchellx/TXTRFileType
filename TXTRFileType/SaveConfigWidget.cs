@@ -1,4 +1,5 @@
-﻿using PaintDotNet;
+﻿using libWiiSharp.GX;
+using PaintDotNet;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
@@ -44,7 +45,7 @@ namespace TXTRFileType
                 Margin = new Padding(4, 0, 0, 8),
                 TabIndex = 1,
                 Name = "TextureFormatCombo",
-                DataSource = Enum.GetValues(typeof(GX.TextureFormat))
+                DataSource = Enum.GetValues(typeof(TextureFormat))
             };
             TextureFormatCombo.SelectionChangeCommitted += tokenChanged;
             Controls.Add(TextureFormatCombo);
@@ -72,7 +73,7 @@ namespace TXTRFileType
                 TabIndex = 3,
                 Name = "TexturePaletteCombo",
                 Enabled = false,
-                DataSource = Enum.GetValues(typeof(GX.PaletteFormat))
+                DataSource = Enum.GetValues(typeof(PaletteFormat))
             };
             TexturePaletteCombo.SelectionChangeCommitted += tokenChanged;
             Controls.Add(TexturePaletteCombo);
@@ -81,8 +82,8 @@ namespace TXTRFileType
         protected override void InitTokenFromWidget()
         {
             TXTRFileTypeSaveConfigToken token = (TXTRFileTypeSaveConfigToken)Token;
-            token.TextureFormat = (GX.TextureFormat)TextureFormatCombo.SelectedItem;
-            token.TexturePalette = (GX.PaletteFormat)TexturePaletteCombo.SelectedItem;
+            token.TextureFormat = (TextureFormat)TextureFormatCombo.SelectedItem;
+            token.TexturePalette = (PaletteFormat)TexturePaletteCombo.SelectedItem;
         }
 
         protected override void InitWidgetFromToken(SaveConfigToken sourceToken)
@@ -104,9 +105,9 @@ namespace TXTRFileType
             if (TexturePaletteCombo.SelectedIndex < 0) TexturePaletteCombo.SelectedIndex = 0;
             switch (TextureFormatCombo.SelectedItem)
             {
-                case GX.TextureFormat.CI4:
-                case GX.TextureFormat.CI8:
-                case GX.TextureFormat.CI14X2:
+                case TextureFormat.CI4:
+                case TextureFormat.CI8:
+                case TextureFormat.CI14X2:
                     TexturePaletteCombo.Enabled = true;
                     break;
                 default:
