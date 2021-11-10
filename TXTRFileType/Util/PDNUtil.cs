@@ -217,7 +217,7 @@ namespace TXTRFileType.Util
 
         #endregion
 
-        #region FlipPixel
+        #region FlipCoordinate
 
         public static int FlipCoordinate(int widthOrHeight, int xOrY)
             => (widthOrHeight - 1) - xOrY;

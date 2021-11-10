@@ -85,7 +85,6 @@ namespace TXTRFileType
 
                 // Load pixels to image
                 Image<Bgra32> imgPdn = Image.LoadPixelData<Bgra32>(((BitmapLayer)input.Layers[0]).Surface.Scan0.ToByteArray(), mipWidth, mipHeight);
-                //imgPdn.Mutate(x => x.Flip(FlipMode.Vertical));
                 (byte[] textureData, byte[] paletteData,
                     ushort paletteWidth, ushort paletteHeight) = TextureConverter.CreateTexture(textureFormat, paletteFormat, imgPdn);
 
@@ -189,13 +188,22 @@ namespace TXTRFileType
                     using (Image<Bgra32> image = TextureConverter.ExtractTexture(textureFormat, paletteFormat,
                         br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)), paletteData, mipWidth, mipHeight))
                     {
+                        int fx = 0;
+                        int fy = 0;
                         for (int y = 0; y < image.Height; y++)
                         {
                             Span<Bgra32> row = image.GetPixelRowSpan(y);
                             for (int x = 0; x < row.Length; x++)
                             {
                                 ref Bgra32 pixel = ref row[x];
-                                PDNUtil.SetPixel(ref layer, x, y, false, true, pixel.R, pixel.G, pixel.B, pixel.A);
+                                // Flip x one time and y two times on indexed formats
+                                fx = x;
+                                fy = y;
+                                if (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2)
+                                    (fx, fy) = PDNUtil.FlipCoordinate(image.Width, image.Height, x, y);
+                                else
+                                    fx = PDNUtil.FlipCoordinate(image.Width, x);
+                                PDNUtil.SetPixel(ref layer, fx, fy, true, true, pixel.R, pixel.G, pixel.B, pixel.A);
                             }
                         }
                     }
