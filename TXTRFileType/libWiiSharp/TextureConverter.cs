@@ -59,8 +59,8 @@ namespace libWiiSharp
                 case TextureFormat.RGB5A3:
                     rgbaData = fromRGB5A3(textureData, textureWidth, textureHeight);
                     break;
-                case TextureFormat.RGBA8:
-                    rgbaData = fromRGBA8(textureData, textureWidth, textureHeight);
+                case TextureFormat.RGBA32:
+                    rgbaData = fromRGBA32(textureData, textureWidth, textureHeight);
                     break;
                 case TextureFormat.CI4:
                     rgbaData = fromCI4(textureData, paletteToRgba(paletteFormat, paletteData), textureWidth, textureHeight);
@@ -75,7 +75,7 @@ namespace libWiiSharp
                     rgbaData = fromCMPR(textureData, textureWidth, textureHeight);
                     break;
                 default:
-                    throw new NotSupportedException($"Texture format '{textureFormat}' ({textureFormat:X8}) is not supported");
+                    throw new NotSupportedException($"Texture format '{textureFormat}' ({(uint)textureFormat:X8}) is not supported");
             }
 
             return rgbaToImage(rgbaData, textureWidth, textureHeight);
@@ -84,10 +84,10 @@ namespace libWiiSharp
         public static (byte[] textureData, byte[] paletteData, ushort paletteWidth, ushort paletteHeight) CreateTexture(
             TextureFormat textureFormat, PaletteFormat paletteFormat, Image<Bgra32> img)
         {
-            byte[] textureData;
-            byte[] paletteData;
-            ushort paletteWidth;
-            ushort paletteHeight;
+            byte[] textureData = Array.Empty<byte>();
+            byte[] paletteData = Array.Empty<byte>();
+            ushort paletteWidth = 0;
+            ushort paletteHeight = 0;
 
             switch (textureFormat)
             {
@@ -109,33 +109,32 @@ namespace libWiiSharp
                 case TextureFormat.RGB5A3:
                     textureData = toRGB5A3(img);
                     break;
-                case TextureFormat.RGBA8:
-                    textureData = toRGBA8(img);
+                case TextureFormat.RGBA32:
+                    textureData = toRGBA32(img);
                     break;
                 case TextureFormat.CI4:
                 case TextureFormat.CI8:
                 case TextureFormat.CI14X2:
-                    textureData = Array.Empty<byte>();
+                    // Assigned later on
                     break;
-                case TextureFormat.CMPR:
-                    //rgbaData = toCMPR(img);
-                    break;
+                // TODO: Saving CMPR
+                //case TextureFormat.CMPR:
+                    //textureData = toCMPR(img);
+                    //break;
                 default:
-                    throw new NotSupportedException($"Texture format '{textureFormat}' ({textureFormat:X8}) is not supported");
+                    throw new NotSupportedException($"Texture format '{textureFormat}' ({(uint)textureFormat:X8}) is not supported");
             }
 
             if (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2)
             {
-                GXColorIndexConverter cic = new GXColorIndexConverter(imageToRgba(img), img.Width, img.Height, textureFormat, paletteFormat);
+                ColorIndexConverter cic = new ColorIndexConverter(imageToRgba(img), img.Width, img.Height, textureFormat, paletteFormat);
 
                 textureData = cic.Data;
                 paletteData = cic.Palette;
 
                 paletteWidth = (ushort)(paletteData.Length / 2);
-                paletteHeight = (ushort)(paletteData.Length / 2);
+                paletteHeight = 1;
             }
-            else
-                throw new NotSupportedException($"Palette format '{paletteFormat}' ({paletteFormat:X8}) is not supported");
 
             return (textureData: textureData, paletteData: paletteData, paletteWidth: paletteWidth, paletteHeight: paletteHeight);
         }
@@ -153,7 +152,7 @@ namespace libWiiSharp
                 case TextureFormat.RGB565:
                 case TextureFormat.RGB5A3:
                     return Shared.AddPadding(width, 4) * Shared.AddPadding(height, 4) * 2;
-                case TextureFormat.RGBA8:
+                case TextureFormat.RGBA32:
                     return Shared.AddPadding(width, 4) * Shared.AddPadding(height, 4) * 4;
                 case TextureFormat.CI4:
                     return Shared.AddPadding(width, 8) * Shared.AddPadding(height, 8) / 2;
@@ -164,7 +163,7 @@ namespace libWiiSharp
                 case TextureFormat.CMPR:
                     return width * height;
                 default:
-                    throw new NotSupportedException($"Texture format '{textureFormat}' ({textureFormat:X8}) is not supported");
+                    throw new NotSupportedException($"Texture format '{textureFormat}' ({(uint)textureFormat:X8}) is not supported");
             }
         }
         #endregion
@@ -227,7 +226,7 @@ namespace libWiiSharp
                         }
                         break;
                     default:
-                        throw new NotSupportedException($"Palette format '{paletteFormat}' ({paletteFormat:X8}) is not supported");
+                        throw new NotSupportedException($"Palette format '{paletteFormat}' ({(uint)paletteFormat:X8}) is not supported");
                 }
 
                 output[i] = (uint)((r << 0) | (g << 8) | (b << 16) | (a << 24));
@@ -258,8 +257,8 @@ namespace libWiiSharp
         #endregion
 
         #region Conversions
-        #region RGBA8
-        private static byte[] fromRGBA8(byte[] tpl, int width, int height)
+        #region RGBA32
+        private static byte[] fromRGBA32(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             int inp = 0;
@@ -274,7 +273,7 @@ namespace libWiiSharp
                         {
                             for (int x1 = x; x1 < x + 4; x1++)
                             {
-                                ushort pixel = Shared.Swap(BitConverter.ToUInt16(tpl, inp++ * 2));
+                                ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                                 if ((x1 >= width) || (y1 >= height))
                                     continue;
@@ -300,7 +299,7 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toRGBA8(Image<Bgra32> img)
+        private static byte[] toRGBA32(Image<Bgra32> img)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
@@ -356,7 +355,7 @@ namespace libWiiSharp
         #endregion
 
         #region RGB5A3
-        private static byte[] fromRGB5A3(byte[] tpl, int width, int height)
+        private static byte[] fromRGB5A3(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             int inp = 0;
@@ -371,7 +370,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(tpl, inp++ * 2));
+                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -465,7 +464,7 @@ namespace libWiiSharp
         #endregion
 
         #region RGB565
-        private static byte[] fromRGB565(byte[] tpl, int width, int height)
+        private static byte[] fromRGB565(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             int inp = 0;
@@ -478,7 +477,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(tpl, inp++ * 2));
+                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -539,7 +538,7 @@ namespace libWiiSharp
         #endregion
 
         #region I4
-        private static byte[] fromI4(byte[] tpl, int width, int height)
+        private static byte[] fromI4(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             int inp = 0;
@@ -552,7 +551,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1 += 2)
                         {
-                            int pixel = tpl[inp++];
+                            int pixel = texture[inp++];
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -623,7 +622,7 @@ namespace libWiiSharp
         #endregion
 
         #region I8
-        private static byte[] fromI8(byte[] tpl, int width, int height)
+        private static byte[] fromI8(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             int inp = 0;
@@ -636,7 +635,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1++)
                         {
-                            int pixel = tpl[inp++];
+                            int pixel = texture[inp++];
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -692,7 +691,7 @@ namespace libWiiSharp
         #endregion
 
         #region IA4
-        private static byte[] fromIA4(byte[] tpl, int width, int height)
+        private static byte[] fromIA4(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             int inp = 0;
@@ -705,7 +704,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1++)
                         {
-                            int pixel = tpl[inp++];
+                            int pixel = texture[inp++];
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -767,7 +766,7 @@ namespace libWiiSharp
         #endregion
 
         #region IA8
-        private static byte[] fromIA8(byte[] tpl, int width, int height)
+        private static byte[] fromIA8(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             int inp = 0;
@@ -780,7 +779,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            int pixel = Shared.Swap(BitConverter.ToUInt16(tpl, inp++ * 2));
+                            int pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -846,7 +845,7 @@ namespace libWiiSharp
         #endregion
 
         #region CI4
-        private static byte[] fromCI4(byte[] tpl, uint[] paletteData, int width, int height)
+        private static byte[] fromCI4(byte[] texture, uint[] paletteData, int width, int height)
         {
             uint[] output = new uint[width * height];
             int i = 0;
@@ -859,7 +858,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1 += 2)
                         {
-                            byte pixel = tpl[i++];
+                            byte pixel = texture[i++];
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -878,7 +877,7 @@ namespace libWiiSharp
         #endregion
 
         #region CI8
-        private static byte[] fromCI8(byte[] tpl, uint[] paletteData, int width, int height)
+        private static byte[] fromCI8(byte[] texture, uint[] paletteData, int width, int height)
         {
             uint[] output = new uint[width * height];
             int i = 0;
@@ -891,7 +890,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1++)
                         {
-                            ushort pixel = tpl[i++];
+                            ushort pixel = texture[i++];
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -909,7 +908,7 @@ namespace libWiiSharp
         #endregion
 
         #region CI14X2
-        private static byte[] fromCI14X2(byte[] tpl, uint[] paletteData, int width, int height)
+        private static byte[] fromCI14X2(byte[] texture, uint[] paletteData, int width, int height)
         {
             uint[] output = new uint[width * height];
             int i = 0;
@@ -922,7 +921,7 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(tpl, i++ * 2));
+                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, i++ * 2));
 
                             if (y1 >= height || x1 >= width)
                                 continue;
@@ -940,7 +939,7 @@ namespace libWiiSharp
         #endregion
 
         #region CMPR
-        private static byte[] fromCMPR(byte[] tpl, int width, int height)
+        private static byte[] fromCMPR(byte[] texture, int width, int height)
         {
             uint[] output = new uint[width * height];
             ushort[] c = new ushort[4];
@@ -963,8 +962,8 @@ namespace libWiiSharp
 
                     int off = (8 * x1) + (16 * y1) + (32 * x2) + (4 * ww * y2);
 
-                    c[0] = Shared.Swap(BitConverter.ToUInt16(tpl, off));
-                    c[1] = Shared.Swap(BitConverter.ToUInt16(tpl, off + 2));
+                    c[0] = Shared.Swap(BitConverter.ToUInt16(texture, off));
+                    c[1] = Shared.Swap(BitConverter.ToUInt16(texture, off + 2));
 
                     if (c[0] > c[1])
                     {
@@ -977,7 +976,7 @@ namespace libWiiSharp
                         c[3] = 0;
                     }
 
-                    uint pixel = Shared.Swap(BitConverter.ToUInt32(tpl, off + 4));
+                    uint pixel = Shared.Swap(BitConverter.ToUInt32(texture, off + 4));
 
                     int ix = x0 + (4 * y0);
                     int raw = c[(pixel >> (30 - (2 * ix))) & 0x03];
@@ -1000,24 +999,24 @@ namespace libWiiSharp
         #endregion
         #endregion
 
-        #region GXColorIndexConverter
-        private class GXColorIndexConverter
+        #region ColorIndexConverter
+        private class ColorIndexConverter
         {
             private uint[] rgbaPalette;
-            private byte[] tplPalette;
+            private byte[] texturePalette;
             private uint[] rgbaData;
-            private byte[] tplData;
-            private TextureFormat tplFormat;
+            private byte[] textureData;
+            private TextureFormat textureFormat;
             private PaletteFormat paletteFormat;
             private int width;
             private int height;
 
-            public byte[] Palette { get { return tplPalette; } }
-            public byte[] Data { get { return tplData; } }
+            public byte[] Palette { get { return texturePalette; } }
+            public byte[] Data { get { return textureData; } }
 
-            public GXColorIndexConverter(uint[] rgbaData, int width, int height, TextureFormat tplFormat, PaletteFormat paletteFormat)
+            public ColorIndexConverter(uint[] rgbaData, int width, int height, TextureFormat textureFormat, PaletteFormat paletteFormat)
             {
-                if (tplFormat != TextureFormat.CI4 && tplFormat != TextureFormat.CI8 && tplFormat != TextureFormat.CI14X2)
+                if (textureFormat != TextureFormat.CI4 && textureFormat != TextureFormat.CI8 && textureFormat != TextureFormat.CI14X2)
                     throw new Exception("Texture format must be either CI4 or CI8 or CI14X2!");
                 if (paletteFormat != PaletteFormat.IA8 && paletteFormat != PaletteFormat.RGB565 && paletteFormat != PaletteFormat.RGB5A3)
                     throw new Exception("Palette format must be either IA8, RGB565 or RGB5A3!");
@@ -1025,13 +1024,13 @@ namespace libWiiSharp
                 this.rgbaData = rgbaData;
                 this.width = width;
                 this.height = height;
-                this.tplFormat = tplFormat;
+                this.textureFormat = textureFormat;
                 this.paletteFormat = paletteFormat;
 
                 buildPalette();
 
-                if (tplFormat == TextureFormat.CI4) toCI4();
-                else if (tplFormat == TextureFormat.CI8) toCI8();
+                if (textureFormat == TextureFormat.CI4) toCI4();
+                else if (textureFormat == TextureFormat.CI8) toCI8();
                 else toCI14X2();
             }
 
@@ -1073,7 +1072,7 @@ namespace libWiiSharp
                     }
                 }
 
-                this.tplData = indexData;
+                this.textureData = indexData;
             }
 
             private void toCI8()
@@ -1102,7 +1101,7 @@ namespace libWiiSharp
                     }
                 }
 
-                this.tplData = indexData;
+                this.textureData = indexData;
             }
 
             private void toCI14X2()
@@ -1133,14 +1132,14 @@ namespace libWiiSharp
                     }
                 }
 
-                this.tplData = indexData;
+                this.textureData = indexData;
             }
 
             private void buildPalette()
             {
                 int palLength = 256;
-                if (tplFormat == TextureFormat.CI4) palLength = 16;
-                else if (tplFormat == TextureFormat.CI14X2) palLength = 16384;
+                if (textureFormat == TextureFormat.CI4) palLength = 16;
+                else if (textureFormat == TextureFormat.CI14X2) palLength = 16384;
 
                 List<uint> palette = new List<uint>();
                 List<ushort> tPalette = new List<ushort>();
@@ -1151,21 +1150,21 @@ namespace libWiiSharp
                 for (int i = 1; i < rgbaData.Length; i++)
                 {
                     if (palette.Count == palLength) break;
-                    if (((rgbaData[i] >> 24) & 0xff) < ((tplFormat == TextureFormat.CI14X2) ? 1 : 25)) continue;
+                    if (((rgbaData[i] >> 24) & 0xff) < ((textureFormat == TextureFormat.CI14X2) ? 1 : 25)) continue;
 
-                    ushort tplValue = libWiiSharp.Shared.Swap(convertToPaletteValue((int)rgbaData[i]));
+                    ushort textureValue = libWiiSharp.Shared.Swap(convertToPaletteValue((int)rgbaData[i]));
 
-                    if (!palette.Contains(rgbaData[i]) && !tPalette.Contains(tplValue))
+                    if (!palette.Contains(rgbaData[i]) && !tPalette.Contains(textureValue))
                     {
                         palette.Add(rgbaData[i]);
-                        tPalette.Add(tplValue);
+                        tPalette.Add(textureValue);
                     }
                 }
 
                 while (palette.Count % 16 != 0)
                 { palette.Add(0xffffffff); tPalette.Add(0xffff); }
 
-                tplPalette = libWiiSharp.Shared.UShortArrayToByteArray(tPalette.ToArray());
+                texturePalette = libWiiSharp.Shared.UShortArrayToByteArray(tPalette.ToArray());
                 rgbaPalette = palette.ToArray();
             }
 
@@ -1227,7 +1226,7 @@ namespace libWiiSharp
                 uint minDistance = 0x7FFFFFFF;
                 uint colorIndex = 0;
 
-                if (((value >> 24) & 0xFF) < ((tplFormat == TextureFormat.CI14X2) ? 1 : 25)) return 0;
+                if (((value >> 24) & 0xFF) < ((textureFormat == TextureFormat.CI14X2) ? 1 : 25)) return 0;
                 ushort color = convertToPaletteValue((int)value);
 
                 for (int i = 0; i < rgbaPalette.Length; i++)

@@ -134,18 +134,11 @@ namespace TXTRFileType.Util
         /// <param name="colorOptions">The options on how to set the pixel's color</param>
         public static void SetPixel(ref BitmapLayer layer, int x, int y, bool flipX, bool flipY, ColorBgra dstColor, ColorOptions colorOptions = ColorOptions.NONE)
         {
-            if (dstColor.A > 0 && once)
-            {
-                once = false;
-                System.Diagnostics.Debug.WriteLine(dstColor);
-            }
-            int newX = flipX ? (layer.Width - 1) - x : x;
-            int newY = flipY ? (layer.Height - 1) - y : y;
+            (int newX, int newY) = FlipCoordinate(layer.Width, layer.Height, x, y);
             ColorBgra srcColor = layer.Surface[newX, newY];
             SetColor(ref srcColor, dstColor, colorOptions);
             layer.Surface[newX, newY] = srcColor;
         }
-        static bool once = true;
 
         #endregion
 
@@ -223,5 +216,20 @@ namespace TXTRFileType.Util
         }
 
         #endregion
+
+        #region FlipPixel
+
+        public static int FlipCoordinate(int widthOrHeight, int xOrY)
+            => (widthOrHeight - 1) - xOrY;
+
+        public static (int x, int y) FlipCoordinate(int width, int height, int x, int y)
+            => (x: FlipCoordinate(width, x), y: FlipCoordinate(height, y));
+
+        #endregion
+
+        /// <summary>Convenience fields</summary>
+        public static class StaticMembers
+        {
+        }
     }
 }

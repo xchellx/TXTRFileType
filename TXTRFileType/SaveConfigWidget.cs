@@ -3,94 +3,43 @@ using PaintDotNet;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using TXTRFileType.Util;
 
 namespace TXTRFileType
 {
     //// START DESIGNER STUFF ////
     internal partial class TXTRFileTypeSaveConfigWidget : SaveConfigWidget
     {
-        private Label label1;
-        private ComboBox comboBox1;
-        private Label label2;
-        private ComboBox comboBox2;
+        private Label textureFormatLabel;
+        private ComboBox textureFormatComboBox;
+        private Label paletteFormatLabel;
+        private ComboBox paletteFormatComboBox;
+        private CheckBox generateMipmapsCheckBox;
 
         //// END DESIGNER STUFF ////
-        //// START PAINT.NET STUFF //
-        private Label TextureFormatLabel;
-        private ComboBox TextureFormatCombo;
-        private Label TexturePaletteLabel;
-        private ComboBox TexturePaletteCombo;
+        //// START PAINT.NET STUFF ////
 
         public TXTRFileTypeSaveConfigWidget()
         {
-            TextureFormatLabel = new Label
-            {
-                AutoSize = true,
-                Location = new Point(0, 5),
-                Size = new Size(93, 15),
-                Margin = new Padding(0, 0, 0, 8),
-                TabIndex = 0,
-                Name = "TextureFormatLabel",
-                Text = "Texture Format:"
-            };
-            TextureFormatLabel.Font = new Font(TextureFormatLabel.Font.FontFamily, 6.8F);
-            Controls.Add(TextureFormatLabel);
-
-            TextureFormatCombo = new ComboBox
-            {
-                AutoSize = true,
-                FormattingEnabled = true,
-                Location = new Point(97, 0),
-                Size = new Size(131, 24),
-                Margin = new Padding(4, 0, 0, 8),
-                TabIndex = 1,
-                Name = "TextureFormatCombo",
-                DataSource = Enum.GetValues(typeof(TextureFormat))
-            };
-            TextureFormatCombo.SelectionChangeCommitted += tokenChanged;
-            Controls.Add(TextureFormatCombo);
-
-            TexturePaletteLabel = new Label
-            {
-                AutoSize = true,
-                Location = new Point(0, 37),
-                Size = new Size(90, 15),
-                Margin = new Padding(0, 0, 0, 8),
-                TabIndex = 2,
-                Name = "TexturePaletteLabel",
-                Text = "Palette Format:"
-            };
-            TexturePaletteLabel.Font = new Font(TextureFormatLabel.Font.FontFamily, 6.8F);
-            Controls.Add(TexturePaletteLabel);
-
-            TexturePaletteCombo = new ComboBox
-            {
-                AutoSize = true,
-                FormattingEnabled = true,
-                Location = new Point(94, 32),
-                Size = new Size(134, 24),
-                Margin = new Padding(4, 0, 0, 8),
-                TabIndex = 3,
-                Name = "TexturePaletteCombo",
-                Enabled = false,
-                DataSource = Enum.GetValues(typeof(PaletteFormat))
-            };
-            TexturePaletteCombo.SelectionChangeCommitted += tokenChanged;
-            Controls.Add(TexturePaletteCombo);
+            InitializeComponent();
+            UIUtil.BindEnumToCombobox<TextureFormat>(textureFormatComboBox, TextureFormat.I4);
+            UIUtil.BindEnumToCombobox<PaletteFormat>(paletteFormatComboBox, PaletteFormat.IA8);
         }
 
         protected override void InitTokenFromWidget()
         {
             TXTRFileTypeSaveConfigToken token = (TXTRFileTypeSaveConfigToken)Token;
-            token.TextureFormat = (TextureFormat)TextureFormatCombo.SelectedItem;
-            token.TexturePalette = (PaletteFormat)TexturePaletteCombo.SelectedItem;
+            token.TextureFormat = (TextureFormat)((UIUtil.ComboBoxEnumItem<TextureFormat>)textureFormatComboBox.SelectedItem).Value;
+            token.TexturePalette = (PaletteFormat)((UIUtil.ComboBoxEnumItem<PaletteFormat>)paletteFormatComboBox.SelectedItem).Value;
+            token.GenerateMipmaps = generateMipmapsCheckBox.Checked;
         }
 
         protected override void InitWidgetFromToken(SaveConfigToken sourceToken)
         {
             TXTRFileTypeSaveConfigToken token = (TXTRFileTypeSaveConfigToken)sourceToken;
-            TextureFormatCombo.SelectedItem = token.TextureFormat;
-            TexturePaletteCombo.SelectedItem = token.TexturePalette;
+            textureFormatComboBox.SelectedItem = UIUtil.ComboBoxEnumItem<TextureFormat>.CreateComboBoxEnumItem(token.TextureFormat);
+            paletteFormatComboBox.SelectedItem = UIUtil.ComboBoxEnumItem<PaletteFormat>.CreateComboBoxEnumItem(token.TexturePalette);
+            generateMipmapsCheckBox.Checked = token.GenerateMipmaps;
         }
 
         private void tokenChanged(object sender, EventArgs e)
@@ -101,88 +50,137 @@ namespace TXTRFileType
 
         private void CheckControls()
         {
-            if (TextureFormatCombo.SelectedIndex < 0) TextureFormatCombo.SelectedIndex = 0;
-            if (TexturePaletteCombo.SelectedIndex < 0) TexturePaletteCombo.SelectedIndex = 0;
-            switch (TextureFormatCombo.SelectedItem)
+            if (textureFormatComboBox.SelectedIndex < 0) textureFormatComboBox.SelectedIndex = 0;
+            if (paletteFormatComboBox.SelectedIndex < 0) paletteFormatComboBox.SelectedIndex = 0;
+            switch ((TextureFormat)((UIUtil.ComboBoxEnumItem<TextureFormat>)textureFormatComboBox.SelectedItem).Value)
             {
                 case TextureFormat.CI4:
                 case TextureFormat.CI8:
                 case TextureFormat.CI14X2:
-                    TexturePaletteCombo.Enabled = true;
+                    paletteFormatComboBox.Enabled = true;
+                    generateMipmapsCheckBox.Enabled = false;
                     break;
                 default:
-                    TexturePaletteCombo.Enabled = false;
+                    paletteFormatComboBox.Enabled = false;
+                    generateMipmapsCheckBox.Enabled = true;
                     break;
             }
         }
 
-        //// END PAINT.NET STUFF //
+        //// END PAINT.NET STUFF ////
         //// START DESIGNER STUFF ////
-        /// <summary>
-        /// This is required for designer preview so the UI can easily be templated for actual code setup elsewhere.
-        /// As a result, all of this code is temporary preview template code. It is only used for reference.
-        /// </summary>
+        
         private void InitializeComponent()
         {
-            this.label2 = new System.Windows.Forms.Label();
-            this.comboBox2 = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.textureFormatLabel = new System.Windows.Forms.Label();
+            this.textureFormatComboBox = new System.Windows.Forms.ComboBox();
+            this.paletteFormatLabel = new System.Windows.Forms.Label();
+            this.paletteFormatComboBox = new System.Windows.Forms.ComboBox();
+            this.generateMipmapsCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
-            // label2
+            // textureFormatLabel
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(0, 37);
-            this.label2.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(90, 15);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "Palette Format:";
+            this.textureFormatLabel.AutoSize = true;
+            this.textureFormatLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.textureFormatLabel.Location = new System.Drawing.Point(0, 0);
+            this.textureFormatLabel.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.textureFormatLabel.Name = "textureFormatLabel";
+            this.textureFormatLabel.Size = new System.Drawing.Size(113, 18);
+            this.textureFormatLabel.TabIndex = 0;
+            this.textureFormatLabel.Text = "Texture Format:";
             // 
-            // comboBox2
+            // textureFormatComboBox
             // 
-            this.comboBox2.FormattingEnabled = true;
-            this.comboBox2.Location = new System.Drawing.Point(94, 32);
-            this.comboBox2.Margin = new System.Windows.Forms.Padding(4, 0, 0, 8);
-            this.comboBox2.Name = "comboBox2";
-            this.comboBox2.Size = new System.Drawing.Size(134, 24);
-            this.comboBox2.TabIndex = 2;
+            this.textureFormatComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.textureFormatComboBox.FormattingEnabled = true;
+            this.textureFormatComboBox.Location = new System.Drawing.Point(0, 26);
+            this.textureFormatComboBox.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
+            this.textureFormatComboBox.MinimumSize = new System.Drawing.Size(103, 0);
+            this.textureFormatComboBox.Name = "textureFormatComboBox";
+            this.textureFormatComboBox.Size = new System.Drawing.Size(203, 28);
+            this.textureFormatComboBox.TabIndex = 1;
+            this.textureFormatComboBox.SelectionChangeCommitted += new System.EventHandler(this.tokenChanged);
             // 
-            // label1
+            // paletteFormatLabel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(0, 5);
-            this.label1.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(93, 15);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Texture Format:";
+            this.paletteFormatLabel.AutoSize = true;
+            this.paletteFormatLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.paletteFormatLabel.Location = new System.Drawing.Point(0, 70);
+            this.paletteFormatLabel.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.paletteFormatLabel.Name = "paletteFormatLabel";
+            this.paletteFormatLabel.Size = new System.Drawing.Size(109, 18);
+            this.paletteFormatLabel.TabIndex = 0;
+            this.paletteFormatLabel.Text = "Palette Format:";
             // 
-            // comboBox1
+            // paletteFormatComboBox
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(97, 0);
-            this.comboBox1.Margin = new System.Windows.Forms.Padding(4, 0, 0, 8);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(131, 24);
-            this.comboBox1.TabIndex = 0;
+            this.paletteFormatComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.paletteFormatComboBox.Enabled = false;
+            this.paletteFormatComboBox.FormattingEnabled = true;
+            this.paletteFormatComboBox.Location = new System.Drawing.Point(0, 96);
+            this.paletteFormatComboBox.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
+            this.paletteFormatComboBox.MinimumSize = new System.Drawing.Size(106, 0);
+            this.paletteFormatComboBox.Name = "paletteFormatComboBox";
+            this.paletteFormatComboBox.Size = new System.Drawing.Size(203, 28);
+            this.paletteFormatComboBox.TabIndex = 2;
+            this.paletteFormatComboBox.SelectionChangeCommitted += new System.EventHandler(this.tokenChanged);
+            // 
+            // generateMipmapsCheckBox
+            // 
+            this.generateMipmapsCheckBox.AutoSize = true;
+            this.generateMipmapsCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.generateMipmapsCheckBox.Location = new System.Drawing.Point(0, 140);
+            this.generateMipmapsCheckBox.Margin = new System.Windows.Forms.Padding(0);
+            this.generateMipmapsCheckBox.Name = "generateMipmapsCheckBox";
+            this.generateMipmapsCheckBox.Size = new System.Drawing.Size(156, 22);
+            this.generateMipmapsCheckBox.TabIndex = 3;
+            this.generateMipmapsCheckBox.Text = "Generate Mipmaps";
+            this.generateMipmapsCheckBox.UseVisualStyleBackColor = true;
+            this.generateMipmapsCheckBox.CheckedChanged += new System.EventHandler(this.tokenChanged);
             // 
             // TXTRFileTypeSaveConfigWidget
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.comboBox1);
-            this.Controls.Add(this.comboBox2);
+            this.AutoSize = true;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.Controls.Add(this.textureFormatLabel);
+            this.Controls.Add(this.textureFormatComboBox);
+            this.Controls.Add(this.paletteFormatLabel);
+            this.Controls.Add(this.paletteFormatComboBox);
+            this.Controls.Add(this.generateMipmapsCheckBox);
+            this.MinimumSize = new System.Drawing.Size(200, 200);
             this.Name = "TXTRFileTypeSaveConfigWidget";
-            this.Size = new System.Drawing.Size(228, 228);
+            this.Size = new System.Drawing.Size(203, 200);
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
+
         //// END DESIGNER STUFF ////
+        //// START PAINT.NET STUFF ////
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            // Ensure comboboxs have their dropdown width wrap to the max content width
+            textureFormatComboBox.DropDownWidth = UIUtil.GetDropDownWidth(textureFormatComboBox);
+            paletteFormatComboBox.DropDownWidth = UIUtil.GetDropDownWidth(paletteFormatComboBox);
+
+            // Listen for parent resize
+            Parent.SizeChanged += (sender, e) =>
+            {
+                // Resize things to fit parent
+                if (Width != Parent.Size.Width)
+                {
+                    Width = Parent.Size.Width;
+                    textureFormatComboBox.Width = (Parent.Size.Width - textureFormatComboBox.Location.X) - SystemInformation.VerticalScrollBarWidth;
+                    paletteFormatComboBox.Width = (Parent.Size.Width - paletteFormatComboBox.Location.X) - SystemInformation.VerticalScrollBarWidth;
+                }
+            };
+        }
+
+        //// END PAINT.NET STUFF ////
     }
 }

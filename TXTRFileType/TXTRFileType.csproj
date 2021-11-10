@@ -54,9 +54,7 @@
 
   <!-- Ensure "SaveConfigWidget.cs" is compiled as a WinForms UserControl -->
   <ItemGroup>
-    <Compile Update="SaveConfigWidget.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Update="SaveConfigWidget.cs" />
   </ItemGroup>
   
   <!-- ENVIRONMENT VARIABLE DEPENDENT PROPERTIES -->
