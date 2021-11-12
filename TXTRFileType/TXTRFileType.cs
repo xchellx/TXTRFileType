@@ -7,7 +7,6 @@ using SixLabors.ImageSharp.Processing;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Numerics;
 using System.Text;
 using TXTRFileType.IO;
 using TXTRFileType.Util;
@@ -63,11 +62,15 @@ namespace TXTRFileType
             TextureFormat textureFormat = configToken.TextureFormat;
             PaletteFormat paletteFormat = configToken.TexturePalette;
             bool generateMipmaps = configToken.GenerateMipmaps;
+
+            bool isIndexed = (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2);
+            bool isCompressed = (textureFormat == TextureFormat.CMPR);
+
             int mipCount = 1;
             // Mipmaps make no sense with indexed formats, especially with how TXTR is structured. Plus, there is not
             // a single example of a TXTR with an indexed format that includes mipmaps.
-            // TODO: Images being reversed on the X axis wrongly
-            if (generateMipmaps && (textureFormat != TextureFormat.CI4 && textureFormat != TextureFormat.CI8 && textureFormat != TextureFormat.CI14X2))
+            // TODO: Fix oblong textures STILL breaking mipmap count
+            if (generateMipmaps && !isIndexed)
                 mipCount = PDNUtil.CountMips(input.Width, input.Height, sizeLimit);
             int maxProgress = mipCount;
             int curProgress = 0;
@@ -87,13 +90,14 @@ namespace TXTRFileType
 
                 // Load pixels to image
                 Image<Bgra32> imgPdn = Image.LoadPixelData<Bgra32>(((BitmapLayer)input.Layers[0]).Surface.Scan0.ToByteArray(), mipWidth, mipHeight);
-                if (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2)
+                // Flip indexed formats on save only (texture converter did the flipping for us at load)
+                if (isIndexed)
                     imgPdn.Mutate(x => x.Flip(FlipMode.Vertical));
                 (byte[] textureData, byte[] paletteData,
                     ushort paletteWidth, ushort paletteHeight) = TextureConverter.CreateTexture(textureFormat, paletteFormat, imgPdn);
 
                 // Write palette
-                if (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2)
+                if (isIndexed)
                 {
                     bw.Write((uint)paletteFormat);
                     bw.Write((ushort)paletteWidth);
@@ -153,12 +157,15 @@ namespace TXTRFileType
                     throw new InvalidDataException($"Invalid dimensions: width='{textureWidth}', height={textureHeight}");
                 Document document = new Document(textureWidth, textureHeight);
 
+                bool isIndexed = (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2);
+                bool isCompressed = (textureFormat == TextureFormat.CMPR);
+
                 PaletteFormat paletteFormat = PaletteFormat.IA8;
                 ushort paletteWidth = 0;
                 ushort paletteHeight = 0;
                 int paletteSize = 0;
                 byte[] paletteData = Array.Empty<byte>();
-                if (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2)
+                if (isIndexed)
                 {
                     paletteFormat = (PaletteFormat)br.ReadUInt32();
                     Debug.WriteLine("{0} = {1}", nameof(paletteFormat), paletteFormat);
@@ -192,7 +199,8 @@ namespace TXTRFileType
                     BitmapLayer layer = PDNUtil.CreateLayer(textureWidth, textureHeight, $"Mipmap {mipLevel + 1}");
 
                     using (Image<Bgra32> image = TextureConverter.ExtractTexture(textureFormat, paletteFormat,
-                        br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)), paletteData, mipWidth, mipHeight))
+                        br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)),
+                        paletteData, mipWidth, mipHeight))
                     {
                         for (int y = 0; y < image.Height; y++)
                         {
@@ -200,11 +208,11 @@ namespace TXTRFileType
                             for (int x = 0; x < row.Length; x++)
                             {
                                 ref Bgra32 pixel = ref row[x];
-                                PDNUtil.SetPixel(ref layer, x, y, false, !(textureFormat == TextureFormat.CI4 ||
-                                    textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2),
-                                    (textureFormat == TextureFormat.CMPR) ? pixel.B : pixel.R,
+                                // Flip indexed formats on save only (texture converter did the flipping for us at load)
+                                PDNUtil.SetPixel(ref layer, x, y, false, !isIndexed,
+                                    isCompressed ? pixel.B : pixel.R,
                                     pixel.G,
-                                    (textureFormat == TextureFormat.CMPR) ? pixel.R : pixel.B,
+                                    isCompressed ? pixel.R : pixel.B,
                                     pixel.A);
                             }
                         }

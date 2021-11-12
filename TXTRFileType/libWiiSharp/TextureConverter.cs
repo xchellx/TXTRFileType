@@ -947,10 +947,10 @@ namespace libWiiSharp
 
         private static byte[] toCMPR(Image<Bgra32> img)
         {
+            // TODO: Why doesnt squish work?
             byte[] bytes = Shared.UIntArrayToByteArray(imageToRgba(img));
             return Squish.CompressImage(bytes, img.Width, img.Height, SquishFlags.Dxt1GCN);
         }
-
         #endregion
         #endregion
 
