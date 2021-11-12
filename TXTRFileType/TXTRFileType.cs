@@ -7,6 +7,7 @@ using SixLabors.ImageSharp.Processing;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Numerics;
 using System.Text;
 using TXTRFileType.IO;
 using TXTRFileType.Util;
@@ -65,14 +66,9 @@ namespace TXTRFileType
             int mipCount = 1;
             // Mipmaps make no sense with indexed formats, especially with how TXTR is structured. Plus, there is not
             // a single example of a TXTR with an indexed format that includes mipmaps.
-            // TODO: Wrong mipmaps for oblong textures and images being reversed on the X axis wrongly
+            // TODO: Images being reversed on the X axis wrongly
             if (generateMipmaps && (textureFormat != TextureFormat.CI4 && textureFormat != TextureFormat.CI8 && textureFormat != TextureFormat.CI14X2))
-            {
-                //mipCount = (int)Math.Max(Math.Floor(Math.Log2(Math.Max(input.Width, input.Height))) - 1, 1);
-                int widthLevels = (int)Math.Max(Math.Ceiling(Math.Log2(input.Width)) - 1, 1);
-                int heightLevels = (int)Math.Max(Math.Ceiling(Math.Log2(input.Height)) - 1, 1);
-                mipCount = (int)((sizeLimit % heightLevels == 0) ? heightLevels : widthLevels);
-            }
+                mipCount = PDNUtil.CountMips(input.Width, input.Height, sizeLimit);
             int maxProgress = mipCount;
             int curProgress = 0;
 
@@ -91,6 +87,8 @@ namespace TXTRFileType
 
                 // Load pixels to image
                 Image<Bgra32> imgPdn = Image.LoadPixelData<Bgra32>(((BitmapLayer)input.Layers[0]).Surface.Scan0.ToByteArray(), mipWidth, mipHeight);
+                if (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2)
+                    imgPdn.Mutate(x => x.Flip(FlipMode.Vertical));
                 (byte[] textureData, byte[] paletteData,
                     ushort paletteWidth, ushort paletteHeight) = TextureConverter.CreateTexture(textureFormat, paletteFormat, imgPdn);
 
@@ -114,14 +112,16 @@ namespace TXTRFileType
                     mipWidth /= 2;
                     mipHeight /= 2;
 
-                    // Box filter 
+                    // Resize image with box filter 
                     imgPdn.Mutate(x => x.Resize(new ResizeOptions() {
-                        Mode = ResizeMode.Max,
+                        Mode = ResizeMode.Min,
                         Size = new Size(mipWidth, mipHeight),
                         Sampler = KnownResamplers.Box,
                         Compand = true,
                         PremultiplyAlpha = false // This is handled by the texture converter
                     }));
+
+                    // Write mip image
                     (byte[] mipData, _, _, _) = TextureConverter.CreateTexture(textureFormat, paletteFormat, imgPdn);
                     bw.Write(mipData);
                     ++curProgress;
@@ -194,18 +194,18 @@ namespace TXTRFileType
                     using (Image<Bgra32> image = TextureConverter.ExtractTexture(textureFormat, paletteFormat,
                         br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)), paletteData, mipWidth, mipHeight))
                     {
-                        bool isIndexed = textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2;
-                        bool isCompressed = textureFormat == TextureFormat.CMPR;
                         for (int y = 0; y < image.Height; y++)
                         {
                             Span<Bgra32> row = image.GetPixelRowSpan(y);
                             for (int x = 0; x < row.Length; x++)
                             {
                                 ref Bgra32 pixel = ref row[x];
-                                // Flip x one time and y two times on indexed formats
-                                PDNUtil.SetPixel(ref layer, isIndexed ? PDNUtil.FlipCoordinate(image.Width, x) : x,
-                                    isIndexed ? PDNUtil.FlipCoordinate(image.Height, y) : y, isIndexed, true,
-                                    isCompressed ? pixel.B : pixel.R, pixel.G, isCompressed ? pixel.R : pixel.B, pixel.A);
+                                PDNUtil.SetPixel(ref layer, x, y, false, !(textureFormat == TextureFormat.CI4 ||
+                                    textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2),
+                                    (textureFormat == TextureFormat.CMPR) ? pixel.B : pixel.R,
+                                    pixel.G,
+                                    (textureFormat == TextureFormat.CMPR) ? pixel.R : pixel.B,
+                                    pixel.A);
                             }
                         }
                     }

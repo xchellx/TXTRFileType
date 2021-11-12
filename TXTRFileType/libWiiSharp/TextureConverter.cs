@@ -947,12 +947,10 @@ namespace libWiiSharp
 
         private static byte[] toCMPR(Image<Bgra32> img)
         {
-            IMemoryGroup<Rgba32> iMem = img.CloneAs<Rgba32>(img.GetConfiguration()).GetPixelMemoryGroup();
-            Memory<Rgba32> mem = iMem.ToArray()[0];
-            return Squish.CompressImage(MemoryMarshal.AsBytes(mem.Span).ToArray(), img.Width, img.Height, SquishFlags.Dxt1GCN);
+            byte[] bytes = Shared.UIntArrayToByteArray(imageToRgba(img));
+            return Squish.CompressImage(bytes, img.Width, img.Height, SquishFlags.Dxt1GCN);
         }
 
-        //There's currently no conversion to CMPR
         #endregion
         #endregion
 
