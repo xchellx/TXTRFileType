@@ -227,6 +227,17 @@ namespace TXTRFileType.Util
 
         #endregion
 
+        #region CountMips
+
+        public static int CountMips(int width, int height)
+        {
+            int heightLevels = (int)Math.Ceiling(Math.Log2(height));
+            int widthLevels = (int)Math.Ceiling(Math.Log2(width));
+            return (heightLevels > widthLevels) ? heightLevels : widthLevels;
+        }
+
+        #endregion
+
         /// <summary>Convenience fields</summary>
         public static class StaticMembers
         {

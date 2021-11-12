@@ -20,6 +20,7 @@
 //Thanks to the authors!
 
 using libWiiSharp.GX;
+using ManagedSquish;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.Memory;
@@ -118,9 +119,9 @@ namespace libWiiSharp
                     // Assigned later on
                     break;
                 // TODO: Saving CMPR
-                //case TextureFormat.CMPR:
-                    //textureData = toCMPR(img);
-                    //break;
+                case TextureFormat.CMPR:
+                    textureData = toCMPR(img);
+                    break;
                 default:
                     throw new NotSupportedException($"Texture format '{textureFormat}' ({(uint)textureFormat:X8}) is not supported");
             }
@@ -941,58 +942,14 @@ namespace libWiiSharp
         #region CMPR
         private static byte[] fromCMPR(byte[] texture, int width, int height)
         {
-            uint[] output = new uint[width * height];
-            ushort[] c = new ushort[4];
-            int[] pix = new int[4];
-            int inp = 0;
+            return Squish.DecompressImage(texture, width, height, SquishFlags.Dxt1GCN);
+        }
 
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int ww = Shared.AddPadding(width, 8);
-
-                    int x0 = x & 0x03;
-                    int x1 = (x >> 2) & 0x01;
-                    int x2 = x >> 3;
-
-                    int y0 = y & 0x03;
-                    int y1 = (y >> 2) & 0x01;
-                    int y2 = y >> 3;
-
-                    int off = (8 * x1) + (16 * y1) + (32 * x2) + (4 * ww * y2);
-
-                    c[0] = Shared.Swap(BitConverter.ToUInt16(texture, off));
-                    c[1] = Shared.Swap(BitConverter.ToUInt16(texture, off + 2));
-
-                    if (c[0] > c[1])
-                    {
-                        c[2] = (ushort)avg(2, 1, c[0], c[1]);
-                        c[3] = (ushort)avg(1, 2, c[0], c[1]);
-                    }
-                    else
-                    {
-                        c[2] = (ushort)avg(1, 1, c[0], c[1]);
-                        c[3] = 0;
-                    }
-
-                    uint pixel = Shared.Swap(BitConverter.ToUInt32(texture, off + 4));
-
-                    int ix = x0 + (4 * y0);
-                    int raw = c[(pixel >> (30 - (2 * ix))) & 0x03];
-
-                    pix[0] = (raw >> 8) & 0xf8;
-                    pix[1] = (raw >> 3) & 0xf8;
-                    pix[2] = (raw << 3) & 0xf8;
-                    pix[3] = 0xff;
-                    if (((pixel >> (30 - (2 * ix))) & 0x03) == 3 && c[0] <= c[1]) pix[3] = 0x00;
-
-                    output[inp] = (uint)((pix[0] << 16) | (pix[1] << 8) | (pix[2] << 0) | (pix[3] << 24));
-                    inp++;
-                }
-            }
-
-            return Shared.UIntArrayToByteArray(output);
+        private static byte[] toCMPR(Image<Bgra32> img)
+        {
+            IMemoryGroup<Rgba32> iMem = img.CloneAs<Rgba32>(img.GetConfiguration()).GetPixelMemoryGroup();
+            Memory<Rgba32> mem = iMem.ToArray()[0];
+            return Squish.CompressImage(MemoryMarshal.AsBytes(mem.Span).ToArray(), img.Width, img.Height, SquishFlags.Dxt1GCN);
         }
 
         //There's currently no conversion to CMPR

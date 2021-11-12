@@ -95,6 +95,9 @@
 
   <!-- Reference Paint.NET DLLs. -->
   <ItemGroup>
+    <Reference Include="ManagedSquish">
+      <HintPath>ManagedSquish.dll</HintPath>
+    </Reference>
     <Reference Include="PaintDotNet.Base" Condition="'$(PDNInstallDir)' != ''">
       <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Base.dll</HintPath>
     </Reference>

@@ -65,8 +65,14 @@ namespace TXTRFileType
             int mipCount = 1;
             // Mipmaps make no sense with indexed formats, especially with how TXTR is structured. Plus, there is not
             // a single example of a TXTR with an indexed format that includes mipmaps.
+            // TODO: Wrong mipmaps for oblong textures and images being reversed on the X axis wrongly
             if (generateMipmaps && (textureFormat != TextureFormat.CI4 && textureFormat != TextureFormat.CI8 && textureFormat != TextureFormat.CI14X2))
-                mipCount = (int)Math.Max(Math.Floor(Math.Log2(Math.Max(input.Width, input.Height))) - 1, 1);
+            {
+                //mipCount = (int)Math.Max(Math.Floor(Math.Log2(Math.Max(input.Width, input.Height))) - 1, 1);
+                int widthLevels = (int)Math.Max(Math.Ceiling(Math.Log2(input.Width)) - 1, 1);
+                int heightLevels = (int)Math.Max(Math.Ceiling(Math.Log2(input.Height)) - 1, 1);
+                mipCount = (int)((sizeLimit % heightLevels == 0) ? heightLevels : widthLevels);
+            }
             int maxProgress = mipCount;
             int curProgress = 0;
 
@@ -188,8 +194,8 @@ namespace TXTRFileType
                     using (Image<Bgra32> image = TextureConverter.ExtractTexture(textureFormat, paletteFormat,
                         br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)), paletteData, mipWidth, mipHeight))
                     {
-                        int fx = 0;
-                        int fy = 0;
+                        bool isIndexed = textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2;
+                        bool isCompressed = textureFormat == TextureFormat.CMPR;
                         for (int y = 0; y < image.Height; y++)
                         {
                             Span<Bgra32> row = image.GetPixelRowSpan(y);
@@ -197,13 +203,9 @@ namespace TXTRFileType
                             {
                                 ref Bgra32 pixel = ref row[x];
                                 // Flip x one time and y two times on indexed formats
-                                fx = x;
-                                fy = y;
-                                if (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2)
-                                    (fx, fy) = PDNUtil.FlipCoordinate(image.Width, image.Height, x, y);
-                                else
-                                    fx = PDNUtil.FlipCoordinate(image.Width, x);
-                                PDNUtil.SetPixel(ref layer, fx, fy, true, true, pixel.R, pixel.G, pixel.B, pixel.A);
+                                PDNUtil.SetPixel(ref layer, isIndexed ? PDNUtil.FlipCoordinate(image.Width, x) : x,
+                                    isIndexed ? PDNUtil.FlipCoordinate(image.Height, y) : y, isIndexed, true,
+                                    isCompressed ? pixel.B : pixel.R, pixel.G, isCompressed ? pixel.R : pixel.B, pixel.A);
                             }
                         }
                     }
