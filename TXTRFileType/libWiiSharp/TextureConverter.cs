@@ -22,18 +22,24 @@
 using libWiiSharp.GX;
 using ManagedSquish;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Advanced;
-using SixLabors.ImageSharp.Memory;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
+using System.IO;
+using TXTRFileType.Util;
 
 namespace libWiiSharp
 {
     public static class TextureConverter
     {
+        public enum PaletteLengthCopyLocation
+        {
+            [UIUtil.EnumTitleForComboBox("Copy palette length to width")]
+            ToWidth,
+            [UIUtil.EnumTitleForComboBox("Copy palette length to height")]
+            ToHeight
+        }
+
         #region Public Functions
         public static Image<Bgra32> ExtractTexture(TextureFormat textureFormat, PaletteFormat paletteFormat, byte[] textureData,
             byte[] paletteData, int textureWidth, int textureHeight)
@@ -83,7 +89,7 @@ namespace libWiiSharp
         }
 
         public static (byte[] textureData, byte[] paletteData, ushort paletteWidth, ushort paletteHeight) CreateTexture(
-            TextureFormat textureFormat, PaletteFormat paletteFormat, Image<Bgra32> img)
+            TextureFormat textureFormat, PaletteFormat paletteFormat, PaletteLengthCopyLocation palCpyLoc, Image<Bgra32> img)
         {
             byte[] textureData = Array.Empty<byte>();
             byte[] paletteData = Array.Empty<byte>();
@@ -118,7 +124,6 @@ namespace libWiiSharp
                 case TextureFormat.CI14X2:
                     // Assigned later on
                     break;
-                // TODO: Saving CMPR
                 case TextureFormat.CMPR:
                     textureData = toCMPR(img);
                     break;
@@ -133,8 +138,19 @@ namespace libWiiSharp
                 textureData = cic.Data;
                 paletteData = cic.Palette;
 
-                paletteWidth = (ushort)(paletteData.Length / 2);
+                ushort paletteLength = (ushort)(paletteData.Length / 2);
+                paletteWidth = 1;
                 paletteHeight = 1;
+                switch (palCpyLoc)
+                {
+                    case PaletteLengthCopyLocation.ToWidth:
+                        paletteWidth = paletteLength;
+                        break;
+                    case PaletteLengthCopyLocation.ToHeight:
+                        paletteHeight = paletteLength;
+                        break;
+
+                }
             }
 
             return (textureData: textureData, paletteData: paletteData, paletteWidth: paletteWidth, paletteHeight: paletteHeight);
@@ -172,16 +188,14 @@ namespace libWiiSharp
         #region Private Functions
         private static uint[] imageToRgba(Image<Bgra32> img)
         {
-            IMemoryGroup<Bgra32> iMem = img.GetPixelMemoryGroup();
-            Memory<Bgra32> mem = iMem.ToArray()[0];
-            return Shared.ByteArrayToUIntArray(MemoryMarshal.AsBytes(mem.Span).ToArray());
+            return Shared.ByteArrayToUIntArray(ImageUtil.FromImage(img));
         }
 
         private static Image<Bgra32> rgbaToImage(byte[] data, int width, int height)
         {
             if (width == 0) width = 1;
             if (height == 0) height = 1;
-            return Image.LoadPixelData<Bgra32>(data, width, height);
+            return ImageUtil.ToImage<Bgra32>(data, width, height);
         }
 
         private static uint[] paletteToRgba(PaletteFormat paletteFormat, byte[] paletteData)
@@ -942,14 +956,37 @@ namespace libWiiSharp
         #region CMPR
         private static byte[] fromCMPR(byte[] texture, int width, int height)
         {
-            return Squish.DecompressImage(texture, width, height, SquishFlags.Dxt1GCN);
+            // TODO: Figure out why decompressed result has incorrectly positioned data
+            byte[] bgra = new byte[width * height * 4];
+            byte[] rgba = new byte[texture.Length];
+            Array.Copy(texture, 0, rgba, 0, texture.Length);
+            unsafe
+            {
+                fixed (byte* dst = bgra)
+                fixed (byte* src = rgba)
+                {
+                    Squish.DecompressImage((IntPtr)dst, width, height, (IntPtr)src, SquishFlags.Dxt1GCN);
+                }
+            }
+            ImageUtil.ToBGRA(ref bgra);
+            return bgra;
         }
 
         private static byte[] toCMPR(Image<Bgra32> img)
         {
-            // TODO: Why doesnt squish work?
-            byte[] bytes = Shared.UIntArrayToByteArray(imageToRgba(img));
-            return Squish.CompressImage(bytes, img.Width, img.Height, SquishFlags.Dxt1GCN);
+            // TODO: Figure out why mipmaps cause reading past the stream and why it also has incorrect positioned data
+            byte[] rgba = new byte[Squish.GetStorageRequirements(img.Width, img.Height, SquishFlags.Dxt1GCN)];
+            byte[] bgra = ImageUtil.FromImage(img);
+            ImageUtil.ToRGBA(ref bgra);
+            unsafe
+            {
+                fixed (byte* src = bgra)
+                fixed (byte* dst = rgba)
+                {
+                    Squish.CompressImage((IntPtr)src, img.Width, img.Height, (IntPtr)dst, SquishFlags.Dxt1GCN);
+                }
+            }
+            return rgba;
         }
         #endregion
         #endregion

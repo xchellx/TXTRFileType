@@ -134,8 +134,8 @@ namespace TXTRFileType.Util
         /// <param name="colorOptions">The options on how to set the pixel's color</param>
         public static void SetPixel(ref BitmapLayer layer, int x, int y, bool flipX, bool flipY, ColorBgra dstColor, ColorOptions colorOptions = ColorOptions.NONE)
         {
-            int fx = flipX ? FlipCoordinate(layer.Width, x) : x;
-            int fy = flipY ? FlipCoordinate(layer.Height, y) : y;
+            int fx = flipX ? ImageUtil.FlipCoordinate(layer.Width, x) : x;
+            int fy = flipY ? ImageUtil.FlipCoordinate(layer.Height, y) : y;
             ColorBgra srcColor = layer.Surface[fx, fy];
             SetColor(ref srcColor, dstColor, colorOptions);
             layer.Surface[fx, fy] = srcColor;
@@ -214,27 +214,6 @@ namespace TXTRFileType.Util
                 if (((colorOptions & ColorOptions.B_TO_A) == ColorOptions.B_TO_A))
                     srcColor.A = dstColor.B;
             }
-        }
-
-        #endregion
-
-        #region FlipCoordinate
-
-        public static int FlipCoordinate(int widthOrHeight, int xOrY)
-            => (widthOrHeight - 1) - xOrY;
-
-        public static (int x, int y) FlipCoordinate(int width, int height, int x, int y)
-            => (x: FlipCoordinate(width, x), y: FlipCoordinate(height, y));
-
-        #endregion
-
-        #region CountMips
-
-        public static int CountMips(int width, int height, int sizeLimit)
-        {
-            int widthLevels = (int)Math.Max(Math.Ceiling(Math.Log2(width)) - 1, 1);
-            int heightLevels = (int)Math.Max(Math.Ceiling(Math.Log2(height)) - 1, 1);
-            return (int)((sizeLimit % heightLevels == 0) ? heightLevels : widthLevels);
         }
 
         #endregion
