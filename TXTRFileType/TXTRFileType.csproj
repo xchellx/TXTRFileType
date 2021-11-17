@@ -49,6 +49,8 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="BCnEncoder.Net" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
 
@@ -90,14 +92,11 @@
 
   <!-- Copy plugin DLL to Paint.NET plugins directory. -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(PDNENABLEPBE)' != 'false'">
-    <Exec Command="IF NOT EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; mkdir &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot;&#xD;&#xA;IF EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; (&#xD;&#xA;  IF EXIST &quot;$(TargetPath)&quot; (&#xD;&#xA;    COPY /Y /B &quot;$(TargetPath)&quot; /B &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; /B&#xD;&#xA;    COPY /Y /B &quot;$(TargetDir)$(TargetName).deps.json&quot; /B &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; /B&#xD;&#xA;  ) ELSE (&#xD;&#xA;    ECHO ERROR: Failed to copy plugin to plugin directory! Check the build log.&#xD;&#xA;    EXIT /B 1&#xD;&#xA;  )&#xD;&#xA;) ELSE (&#xD;&#xA;  ECHO ERROR: Failed to create plugin directory! Check the build log.&#xD;&#xA;  EXIT /B 1&#xD;&#xA;)" />
+    <Exec Command="IF NOT EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; mkdir &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot;&#xD;&#xA;IF EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; (&#xD;&#xA;  IF EXIST &quot;$(TargetPath)&quot; (&#xD;&#xA;    COPY /Y /B &quot;$(TargetPath)&quot; /B &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; /B&#xD;&#xA;    COPY /Y /B &quot;$(TargetDir)$(TargetName).deps.json&quot; /B &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; /B&#xD;&#xA;  ) ELSE (&#xD;&#xA;    ECHO $(TargetFileName): error 0: ERROR: Failed to copy plugin to plugin directory! Check the build log.&#xD;&#xA;    EXIT /B 1&#xD;&#xA;  )&#xD;&#xA;) ELSE (&#xD;&#xA;  ECHO $(TargetFileName): error 0: ERROR: Failed to create plugin directory! Check the build log.&#xD;&#xA;  EXIT /B 1&#xD;&#xA;)" />
   </Target>
 
   <!-- Reference Paint.NET DLLs. -->
   <ItemGroup>
-    <Reference Include="ManagedSquish">
-      <HintPath>lib\ManagedSquish.dll</HintPath>
-    </Reference>
     <Reference Include="PaintDotNet.Base" Condition="'$(PDNInstallDir)' != ''">
       <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Base.dll</HintPath>
     </Reference>

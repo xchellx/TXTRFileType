@@ -5,7 +5,7 @@ using TXTRFileType.Extensions;
 namespace TXTRFileType.Util
 {
     /// <summary>
-    /// Assembly utility class
+    /// Text utility class
     /// </summary>
     public class TextUtil
     {

@@ -1,5 +1,5 @@
 ﻿using libWiiSharp;
-using libWiiSharp.GX;
+using libWiiSharp.Formats;
 using PaintDotNet;
 using System;
 

@@ -8,7 +8,7 @@ namespace TXTRFileType
 {
     internal static class AssemblyInfo
     {
-        public const string AssemblyTitle = "TXTR FileType Plugin";
+        public const string AssemblyTitle = "TXTR FileType Plugin for Paint.NET";
         public const string AssemblyDescription = "Open TXTR files from the Metroid Prime series of games.";
 #if DEBUG
         public const string AssemblyConfiguration = "Debug";

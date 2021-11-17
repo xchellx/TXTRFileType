@@ -5,6 +5,9 @@ using System.Windows.Forms;
 
 namespace TXTRFileType.Util
 {
+    /// <summary>
+    /// UI utility class
+    /// </summary>
     public static class UIUtil
     {
         public static int GetDropDownWidth(ComboBox combo)

@@ -17,7 +17,7 @@
 
 using TXTRFileType.Util;
 
-namespace libWiiSharp.GX
+namespace libWiiSharp.Formats
 {
     public enum PaletteFormat : uint
     {

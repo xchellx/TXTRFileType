@@ -19,13 +19,14 @@
 //Zetsubou by SquidMan was also a reference.
 //Thanks to the authors!
 
-using libWiiSharp.GX;
-using ManagedSquish;
+using BCnEncoder.Decoder;
+using BCnEncoder.Shared;
+using libWiiSharp.Formats;
+using Microsoft.Toolkit.HighPerformance;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using TXTRFileType.Util;
 
 namespace libWiiSharp
@@ -193,8 +194,6 @@ namespace libWiiSharp
 
         private static Image<Bgra32> rgbaToImage(byte[] data, int width, int height)
         {
-            if (width == 0) width = 1;
-            if (height == 0) height = 1;
             return ImageUtil.ToImage<Bgra32>(data, width, height);
         }
 
@@ -250,24 +249,33 @@ namespace libWiiSharp
             return output;
         }
 
-        private static int avg(int w0, int w1, int c0, int c1)
+        private static void S3TC1ReadBlock(in byte[] data, long offset, ref byte[] block)
         {
-            int a0 = c0 >> 11;
-            int a1 = c1 >> 11;
-            int a = (w0 * a0 + w1 * a1) / (w0 + w1);
-            int c = (a << 11) & 0xffff;
+            // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
+            // Read DXTBlock (sizeof(DXTBlock) == 8)
+            Array.Copy(data, offset, block, 0, 8);
+            // Temporarily store endpoint bytes
+            byte endpt1b1 = block[0], endpt1b2 = block[1], endpt2b1 = block[2], endpt2b2 = block[3];
+            // Reverse bytes of endpoint 1 (ushort)
+            block[0] = endpt1b2;
+            block[1] = endpt1b1;
+            // Reverse bytes of endpoint 2 (ushort)
+            block[2] = endpt2b2;
+            block[3] = endpt2b1;
+            // Reverse the bits of the 4 indices (byte[4])
+            block[4] = S3TC1ReverseByte(block[4]);
+            block[5] = S3TC1ReverseByte(block[5]);
+            block[6] = S3TC1ReverseByte(block[6]);
+            block[7] = S3TC1ReverseByte(block[7]);
+        }
 
-            a0 = (c0 >> 5) & 63;
-            a1 = (c1 >> 5) & 63;
-            a = (w0 * a0 + w1 * a1) / (w0 + w1);
-            c = c | ((a << 5) & 0xffff);
-
-            a0 = c0 & 31;
-            a1 = c1 & 31;
-            a = (w0 * a0 + w1 * a1) / (w0 + w1);
-            c = c | a;
-
-            return c;
+        private static byte S3TC1ReverseByte(byte blockByte)
+        {
+            byte blockBit1 = (byte)(blockByte & 0x3);
+            byte blockBit2 = (byte)(blockByte & 0xc);
+            byte blockBit3 = (byte)(blockByte & 0x30);
+            byte blockBit4 = (byte)(blockByte & 0xc0);
+            return (byte)((blockBit1 << 6) | (blockBit2 << 2) | (blockBit3 >> 2) | (blockBit4 >> 6));
         }
         #endregion
 
@@ -956,37 +964,58 @@ namespace libWiiSharp
         #region CMPR
         private static byte[] fromCMPR(byte[] texture, int width, int height)
         {
-            // TODO: Figure out why decompressed result has incorrectly positioned data
-            byte[] bgra = new byte[width * height * 4];
-            byte[] rgba = new byte[texture.Length];
-            Array.Copy(texture, 0, rgba, 0, texture.Length);
-            unsafe
+            BcDecoder bc1Decoder = new BcDecoder();
+            // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
+            byte[] block = new byte[8];
+            // Gives type safe managed access to array memory; for BCnEncoder.NET
+            Span<byte> blockSpan = block.AsSpan();
+            // Data read position
+            long offset = 0L;
+            // { r1, g1, b1, a1, ..., r16, g16, b16, a16 }
+            ColorRgba32[,] rgba = new ColorRgba32[4, 4];
+            // Gives type safe managed access to array memory; for BCnEncoder.NET
+            Span2D<ColorRgba32> rgbaSpan = rgba.AsSpan2D();
+            uint[] bgra = new uint[width * height];
+            for (int ty = 0; ty < width; ty += 8)
             {
-                fixed (byte* dst = bgra)
-                fixed (byte* src = rgba)
+                for (int tx = 0; tx < width; tx += 8)
                 {
-                    Squish.DecompressImage((IntPtr)dst, width, height, (IntPtr)src, SquishFlags.Dxt1GCN);
+                    for (int by = 0; by < 8; by += 4)
+                    {
+                        for (int bx = 0; bx < 8; bx += 4)
+                        {
+                            // Read DXTBlock (sizeof(DXTBlock) == 8)
+                            S3TC1ReadBlock(in texture, offset, ref block);
+                            offset += 8L;
+                            // BC1 with 1 bit Alpha
+                            bc1Decoder.DecodeBlock(blockSpan, CompressionFormat.Bc1WithAlpha, rgbaSpan);
+                            // Write decompressed 16 bit block to pixels
+                            for (int px = 0; px < 4; px++)
+                            {
+                                for (int py = 0; py < 4; py++)
+                                {
+                                    // Discard exceeding pixels caused by extra GX blocks
+                                    if ((ty + by + py) < width && (tx + bx + px) < height)
+                                    {
+                                        // Pack color to correct position
+                                        bgra[(ty + by + py) * width + (tx + bx + px)] = (uint)(
+                                            (rgba[py, px].b << 0) | (rgba[py, px].g << 8) | (rgba[py, px].r << 16) | (rgba[py, px].a << 24)
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            ImageUtil.ToBGRA(ref bgra);
-            return bgra;
+            // Packed uints to unpacked bytes
+            return Shared.UIntArrayToByteArray(bgra);
         }
 
         private static byte[] toCMPR(Image<Bgra32> img)
         {
-            // TODO: Figure out why mipmaps cause reading past the stream and why it also has incorrect positioned data
-            byte[] rgba = new byte[Squish.GetStorageRequirements(img.Width, img.Height, SquishFlags.Dxt1GCN)];
-            byte[] bgra = ImageUtil.FromImage(img);
-            ImageUtil.ToRGBA(ref bgra);
-            unsafe
-            {
-                fixed (byte* src = bgra)
-                fixed (byte* dst = rgba)
-                {
-                    Squish.CompressImage((IntPtr)src, img.Width, img.Height, (IntPtr)dst, SquishFlags.Dxt1GCN);
-                }
-            }
-            return rgba;
+            // TODO: Conversion to CMPR
+            throw new NotImplementedException(nameof(toCMPR));
         }
         #endregion
         #endregion

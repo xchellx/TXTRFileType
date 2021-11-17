@@ -8,9 +8,9 @@ namespace TXTRFileType
     {
         private readonly Assembly assembly = typeof(PluginSupportInfo).Assembly;
 
-        public string Author => this.assembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
+        public string Author => this.assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company;
 
-        public string Copyright => this.assembly.GetCustomAttribute<AssemblyDescriptionAttribute>().Description;
+        public string Copyright => this.assembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
 
         public string DisplayName => this.assembly.GetCustomAttribute<AssemblyProductAttribute>().Product;
 

@@ -55,17 +55,17 @@ namespace TXTRFileType.Util
         #region ToRGBA/ToBGRA
 
         /// <summary>
-        /// Convert a byte array of RGBA colors in the format [r, g, b, a, ...] into
-        /// BGRA colors in the format [b, g, r, a, ...]
-        /// </summary>
-        /// <param name="bgra">A byte array of RGBA colors in the format [r, g, b, a, ...]</param>
-        public static void ToRGBA(ref byte[] bgra) => SwapChannels(ref bgra, false);
-
-        /// <summary>
         /// Convert a byte array of BGRA colors in the format [b, g, r, a, ...] into
         /// RGBA colors in the format [r, g, b, a, ...]
         /// </summary>
-        /// <param name="rgba">A byte array of BGRA colors in the format [b, g, r, a, ...]</param>
+        /// <param name="bgra">A byte array of BGRA colors in the format [b, g, r, a, ...]</param>
+        public static void ToRGBA(ref byte[] bgra) => SwapChannels(ref bgra, false);
+
+        /// <summary>
+        /// Convert a byte array of RGBA colors in the format [r, g, b, a, ...] into
+        /// BGRA colors in the format [b, g, r, a, ...]
+        /// </summary>
+        /// <param name="rgba">A byte array of RGBA colors in the format [r, g, b, a, ...]</param>
         public static void ToBGRA(ref byte[] rgba) => SwapChannels(ref rgba, true);
 
         private static void SwapChannels(ref byte[] colors, bool toBgra)
@@ -101,7 +101,15 @@ namespace TXTRFileType.Util
 
         #region ToImage/FromImage
 
-        public static Image<TPixel> ToImage<TPixel>(byte[] data, int width, int height)
+        /// <summary>
+        /// Get a <see cref="Image{TPixel}"/> from the bytes of an image
+        /// </summary>
+        /// <typeparam name="TPixel">The type of pixel data in <paramref name="data"/></typeparam>
+        /// <param name="data">The bytes of the image</param>
+        /// <param name="width">The width of the image</param>
+        /// <param name="height">The height of the image</param>
+        /// <returns>A <see cref="Image{TPixel}"/> instance constructed from <paramref name="data"/></returns>
+        public static Image<TPixel> ToImage<TPixel>(in byte[] data, int width, int height)
             where TPixel : unmanaged, IPixel<TPixel>, IPixel, IEquatable<TPixel>
         {
             if (width == 0) width = 1;
@@ -109,7 +117,13 @@ namespace TXTRFileType.Util
             return Image.LoadPixelData<TPixel>(data, width, height);
         }
 
-        public static byte[] FromImage<TPixel>(Image<TPixel> img)
+        /// <summary>
+        /// Get the bytes of a <see cref="Image{TPixel}"/>
+        /// </summary>
+        /// <typeparam name="TPixel">The type of pixel data in <paramref name="img"/></typeparam>
+        /// <param name="img">A <see cref="Image{TPixel}"/></param>
+        /// <returns>The bytes of <paramref name="img"/></returns>
+        public static byte[] FromImage<TPixel>(in Image<TPixel> img)
             where TPixel : unmanaged, IPixel<TPixel>, IPixel, IEquatable<TPixel>
         {
             if (img.TryGetSinglePixelSpan(out var pixelSpan))

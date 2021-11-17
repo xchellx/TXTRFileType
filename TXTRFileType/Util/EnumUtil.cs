@@ -4,7 +4,7 @@ using System.Reflection;
 namespace TXTRFileType.Util
 {
     /// <summary>
-    /// Assembly utility class
+    /// Enum utility class
     /// </summary>
     public class EnumUtil
     {

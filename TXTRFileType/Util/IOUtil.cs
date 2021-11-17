@@ -4,7 +4,7 @@ using System.IO;
 namespace TXTRFileType.Util
 {
     /// <summary>
-    /// Assembly utility class
+    /// IO utility class
     /// </summary>
     public class IOUtil
     {

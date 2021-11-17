@@ -1,10 +1,8 @@
 ﻿using libWiiSharp;
-using libWiiSharp.GX;
+using libWiiSharp.Formats;
 using PaintDotNet;
 using System;
-using System.Drawing;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 using TXTRFileType.Util;
 
 namespace TXTRFileType
@@ -114,7 +112,7 @@ namespace TXTRFileType
             this.textureFormatComboBox.FormattingEnabled = true;
             this.textureFormatComboBox.Location = new System.Drawing.Point(0, 26);
             this.textureFormatComboBox.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
-            this.textureFormatComboBox.MinimumSize = new System.Drawing.Size(103, 0);
+            this.textureFormatComboBox.MinimumSize = new System.Drawing.Size(205, 0);
             this.textureFormatComboBox.Name = "textureFormatComboBox";
             this.textureFormatComboBox.Size = new System.Drawing.Size(205, 28);
             this.textureFormatComboBox.TabIndex = 1;
@@ -140,7 +138,7 @@ namespace TXTRFileType
             this.paletteFormatComboBox.FormattingEnabled = true;
             this.paletteFormatComboBox.Location = new System.Drawing.Point(0, 96);
             this.paletteFormatComboBox.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
-            this.paletteFormatComboBox.MinimumSize = new System.Drawing.Size(106, 0);
+            this.paletteFormatComboBox.MinimumSize = new System.Drawing.Size(205, 0);
             this.paletteFormatComboBox.Name = "paletteFormatComboBox";
             this.paletteFormatComboBox.Size = new System.Drawing.Size(205, 28);
             this.paletteFormatComboBox.TabIndex = 2;
@@ -179,10 +177,11 @@ namespace TXTRFileType
             this.paletteLengthCopyLocationComboBox.FormattingEnabled = true;
             this.paletteLengthCopyLocationComboBox.Location = new System.Drawing.Point(0, 204);
             this.paletteLengthCopyLocationComboBox.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
-            this.paletteLengthCopyLocationComboBox.MinimumSize = new System.Drawing.Size(106, 0);
+            this.paletteLengthCopyLocationComboBox.MinimumSize = new System.Drawing.Size(205, 0);
             this.paletteLengthCopyLocationComboBox.Name = "paletteLengthCopyLocationComboBox";
             this.paletteLengthCopyLocationComboBox.Size = new System.Drawing.Size(205, 28);
             this.paletteLengthCopyLocationComboBox.TabIndex = 4;
+            this.paletteLengthCopyLocationComboBox.SelectionChangeCommitted += new System.EventHandler(this.tokenChanged);
             // 
             // TXTRFileTypeSaveConfigWidget
             // 
@@ -215,6 +214,10 @@ namespace TXTRFileType
             // the incorrect text disabled color (black). This is because the paint color used is [Control]LightLight which
             // WinForms doesn't automatically change for the Dark Mode setting in Windows 10. There is no way to fix this as
             // all things containing possible ways to change it are makred as internal or private.
+            // This bug is because Microsoft used ButtonBase for CheckBox which had its painting code defined for use as a
+            // button which means that it'll inherit the colors a button would use that fits the style of a typical button
+            // when CheckBox is not a typical button. Therefore, the text will become black when disabled for a CheckBox.
+            // This isn't pleasant but there is nothing else that can be done to fix it.
             // See:
             // https://referencesource.microsoft.com/#system.windows.forms/winforms/managed/system/winforms/ButtonInternal/ButtonBaseAdapter.cs,751
             // https://referencesource.microsoft.com/#system.windows.forms/winforms/managed/system/winforms/ButtonInternal/ButtonBaseAdapter.cs,623

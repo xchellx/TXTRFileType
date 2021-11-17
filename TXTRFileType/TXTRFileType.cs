@@ -1,5 +1,5 @@
 ﻿using libWiiSharp;
-using libWiiSharp.GX;
+using libWiiSharp.Formats;
 using PaintDotNet;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -169,8 +169,8 @@ namespace TXTRFileType
                 Debug.WriteLine("{0} = {1}", nameof(mipCount), mipCount);
                 if (textureWidth < 1 || textureHeight < 1)
                     throw new InvalidDataException($"Invalid dimensions: width='{textureWidth}', height={textureHeight}");
-                Document document = new Document(textureWidth, textureHeight);
 
+                Document document = new Document(textureWidth, textureHeight);
                 bool isIndexed = (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2);
 
                 // Read palette
@@ -208,15 +208,14 @@ namespace TXTRFileType
                 {
                     Debug.WriteLine("Decoding mipmap {0}: width = {1}, height = {2}", mipLevel + 1, mipWidth, mipHeight);
                     if (mipWidth < sizeLimit || mipHeight < sizeLimit)
-                        throw new InvalidDataException($"Mip {mipLevel + 1}: Width or Height less than 4. Mipmap count may be invalid.");
+                        throw new InvalidDataException($"Mip {mipLevel + 1}: Width or Height less than {sizeLimit}. Mipmap count may be invalid.");
                     // Would be mipWidth and mipHeight but Paint.NET doesn't allow layers smaller than the image size.
                     // However, this doesn't really matter in the end.
                     BitmapLayer layer = PDNUtil.CreateLayer(textureWidth, textureHeight, $"Mipmap {mipLevel + 1}");
 
                     // Convert image data and load it
                     using (Image<Bgra32> image = TextureConverter.ExtractTexture(textureFormat, paletteFormat,
-                        br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)),
-                        paletteData, mipWidth, mipHeight))
+                        br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)), paletteData, mipWidth, mipHeight))
                     {
                         // Write converted pixel data to Paint.NET layer
                         for (int y = 0; y < image.Height; y++)
