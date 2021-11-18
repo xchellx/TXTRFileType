@@ -20,6 +20,7 @@
 //Thanks to the authors!
 
 using BCnEncoder.Decoder;
+using BCnEncoder.Encoder;
 using BCnEncoder.Shared;
 using libWiiSharp.Formats;
 using Microsoft.Toolkit.HighPerformance;
@@ -249,17 +250,14 @@ namespace libWiiSharp
             return output;
         }
 
-        private static void S3TC1ReadBlock(in byte[] data, long offset, ref byte[] block)
+        private static void S3TC1ReverseBlock(ref byte[] block)
         {
-            // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
-            // Read DXTBlock (sizeof(DXTBlock) == 8)
-            Array.Copy(data, offset, block, 0, 8);
             // Temporarily store endpoint bytes
             byte endpt1b1 = block[0], endpt1b2 = block[1], endpt2b1 = block[2], endpt2b2 = block[3];
-            // Reverse bytes of endpoint 1 (ushort)
+            // Reverse bytes of endpoint 1 (ushort); 0xFFXX -> 0xXXFF
             block[0] = endpt1b2;
             block[1] = endpt1b1;
-            // Reverse bytes of endpoint 2 (ushort)
+            // Reverse bytes of endpoint 2 (ushort); 0xFFXX -> 0xXXFF
             block[2] = endpt2b2;
             block[3] = endpt2b1;
             // Reverse the bits of the 4 indices (byte[4])
@@ -271,10 +269,19 @@ namespace libWiiSharp
 
         private static byte S3TC1ReverseByte(byte blockByte)
         {
-            byte blockBit1 = (byte)(blockByte & 0x3);
-            byte blockBit2 = (byte)(blockByte & 0xc);
-            byte blockBit3 = (byte)(blockByte & 0x30);
-            byte blockBit4 = (byte)(blockByte & 0xc0);
+            // Bits 1 and 2 -> 0bXXXX_XX11
+            byte blockBit1 = (byte)(blockByte & 0b0000_0011);
+            // Bits 3 and 4 -> 0bXXXX_11XX
+            byte blockBit2 = (byte)(blockByte & 0b0000_1100);
+            // Bits 5 and 6 -> 0bXX11_XXXX
+            byte blockBit3 = (byte)(blockByte & 0b0011_0000);
+            // Bits 7 and 8 -> 0b11XX_XXXX
+            byte blockBit4 = (byte)(blockByte & 0b1100_0000);
+            //   8675 4321      8675 4321 | Method
+            // 0bXXXX_XX11 -> 0b11XX_XXXX | Shift left 6 bits
+            // 0bXXXX_11XX -> 0bXX11_XXXX | Shift left 2 bits
+            // 0bXX11_XXXX -> 0bXXXX_11XX | Shift right 2 bits
+            // 0b11XX_XXXX -> 0bXXXX_XX11 | Shift right 6 bits
             return (byte)((blockBit1 << 6) | (blockBit2 << 2) | (blockBit3 >> 2) | (blockBit4 >> 6));
         }
         #endregion
@@ -964,6 +971,7 @@ namespace libWiiSharp
         #region CMPR
         private static byte[] fromCMPR(byte[] texture, int width, int height)
         {
+            // BC1 with 1 bit Alpha
             BcDecoder bc1Decoder = new BcDecoder();
             // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
             byte[] block = new byte[8];
@@ -976,7 +984,7 @@ namespace libWiiSharp
             // Gives type safe managed access to array memory; for BCnEncoder.NET
             Span2D<ColorRgba32> rgbaSpan = rgba.AsSpan2D();
             uint[] bgra = new uint[width * height];
-            for (int ty = 0; ty < width; ty += 8)
+            for (int ty = 0; ty < height; ty += 8)
             {
                 for (int tx = 0; tx < width; tx += 8)
                 {
@@ -985,8 +993,10 @@ namespace libWiiSharp
                         for (int bx = 0; bx < 8; bx += 4)
                         {
                             // Read DXTBlock (sizeof(DXTBlock) == 8)
-                            S3TC1ReadBlock(in texture, offset, ref block);
+                            Array.Copy(texture, offset, block, 0, 8);
                             offset += 8L;
+                            // Fix DXTBlock endianness
+                            S3TC1ReverseBlock(ref block);
                             // BC1 with 1 bit Alpha
                             bc1Decoder.DecodeBlock(blockSpan, CompressionFormat.Bc1WithAlpha, rgbaSpan);
                             // Write decompressed 16 bit block to pixels
@@ -1014,8 +1024,55 @@ namespace libWiiSharp
 
         private static byte[] toCMPR(Image<Bgra32> img)
         {
-            // TODO: Conversion to CMPR
-            throw new NotImplementedException(nameof(toCMPR));
+            byte[] texture = new byte[Shared.AddPadding(img.Width, 4) * Shared.AddPadding(img.Height, 4)];
+            // BC1 with 1 bit Alpha
+            BcEncoder bc1Encoder = new BcEncoder(CompressionFormat.Bc1WithAlpha);
+            // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
+            byte[] block = new byte[8];
+            // Data write position
+            long offset = 0L;
+            // { r1, g1, b1, a1, ..., r16, g16, b16, a16 }
+            ColorRgba32[,] rgba = new ColorRgba32[4, 4];
+            // Gives type safe managed access to array memory; for BCnEncoder.NET
+            ReadOnlySpan2D<ColorRgba32> rgbaSpan = rgba.AsSpan2D();
+            // Image to packed uints
+            uint[] bgra = imageToRgba(img);
+            for (int ty = 0; ty < img.Height; ty += 8)
+            {
+                for (int tx = 0; tx < img.Width; tx += 8)
+                {
+                    for (int by = 0; by < 8; by += 4)
+                    {
+                        for (int bx = 0; bx < 8; bx += 4)
+                        {
+                            // Read pixels as decompressed 16 bit blocks
+                            for (int px = 0; px < 4; px++)
+                            {
+                                for (int py = 0; py < 4; py++)
+                                {
+                                    // Discard exceeding pixels caused by extra GX blocks
+                                    if ((ty + by + py) < img.Width && (tx + bx + px) < img.Height)
+                                    {
+                                        // Unpack color to correct position
+                                        rgba[py, px].r = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 16);
+                                        rgba[py, px].g = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 8);
+                                        rgba[py, px].b = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 0);
+                                        rgba[py, px].a = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 24);
+                                    }
+                                }
+                            }
+                            // BC1 with 1 bit Alpha
+                            Array.Copy(bc1Encoder.EncodeBlock(rgbaSpan), 0, block, 0, 8);
+                            // Fix DXTBlock endianness
+                            S3TC1ReverseBlock(ref block);
+                            // Write compressed 8 bit block to pixels
+                            Array.Copy(block, 0, texture, offset, 8);
+                            offset += 8L;
+                        }
+                    }
+                }
+            }
+            return texture;
         }
         #endregion
         #endregion
