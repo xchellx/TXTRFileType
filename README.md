@@ -20,7 +20,7 @@ There is a post build event that depends on environment variables:
 
 The post build event copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory). The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must be manually copied to the plugin directory.
 
-##LICENSE
+## LICENSE
 ```
 TXTRFileType
 Copyright (C) 2021 xchellx
