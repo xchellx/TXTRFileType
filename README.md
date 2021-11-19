@@ -22,6 +22,8 @@ The project and the post build event depends on some environment variables:
 - Set the environment variable "PDNENABLEPBE" to 'true' to enable post build event and set to 'false' disable it.
 - Set the environment variable "PDNPLUGINTYPE" to "FileType" or "Effect" according to what type of plugin you are making. This is required to prevent post build event from failing.
 
+You can set this variables using either the `SETX` command or `Control Panel -> System -> Advanced System Properties -> Environment Variables`
+
 ## License
 ```
 TXTRFileType
