@@ -45,9 +45,9 @@ namespace TXTRFileType.Util
         /// <returns>The mipmap count of the mipmaps that can exist within an image's size</returns>
         public static int CountMips(int width, int height, int sizeLimit = 4)
         {
-            int widthLevels = (int)Math.Max(Math.Ceiling(Math.Log2(width)) - 1, 1);
-            int heightLevels = (int)Math.Max(Math.Ceiling(Math.Log2(height)) - 1, 1);
-            return (int)(heightLevels < widthLevels ? heightLevels : widthLevels);
+            int widthLevels = (int)Math.Floor(Math.Log(width, 2)) - Math.Max(sizeLimit / 2, 0),
+                heightLevels = (int)Math.Floor(Math.Log(height, 2)) - Math.Max(sizeLimit / 2, 0);
+            return Math.Max(widthLevels < heightLevels ? widthLevels : heightLevels, 0);
         }
 
         #endregion

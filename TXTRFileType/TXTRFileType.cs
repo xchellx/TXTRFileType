@@ -101,7 +101,7 @@ namespace TXTRFileType
                     mipWidth, mipHeight))
                 {
                     // Flip indexed formats on save only (texture converter did the flipping for us at load)
-                    if (isIndexed)
+                    if (!isIndexed)
                         imgPdn.Mutate(x => x.Flip(FlipMode.Vertical));
                     (byte[] textureData, byte[] paletteData, ushort paletteWidth, ushort paletteHeight)
                         = TextureConverter.CreateTexture(textureFormat, paletteFormat, paletteLengthCopyLocation, imgPdn);
