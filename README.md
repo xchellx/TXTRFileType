@@ -1,6 +1,6 @@
 # TXTRFileType
 TXTR file type plugin for Paint.NET to load TXTR files from the Metroid Prime series.
-With this you'll be able to extract, edit, and create TXTR texture files for or from the Metroid prime series. GX2 support is not included and not planned therefore TXTR files from the Donkey Kong Country Returns and Donkey Kong Country: Tropical Freeze games. This is open for contributions, however.
+With this you'll be able to extract, edit, and create TXTR texture files for or from the Metroid prime series. GX2 support is not included and not planned therefore TXTR files from the Donkey Kong Country Returns and Donkey Kong Country: Tropical Freeze games is not supported. This is open for contributions, however.
 
 ## Features
 - Supports loading and saving all texture formats
