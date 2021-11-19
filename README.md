@@ -8,11 +8,12 @@ With this you'll be able to extract, edit, and create TXTR texture files for or 
 - Automatic image coordinate flipping
 
 ## Building
+### Requirements
 - Visual Studio 2019 or greater. [Get it here](https://visualstudio.microsoft.com/downloads/).
 - .NET 5.0 SDK. [Get it here](https://dotnet.microsoft.com/download/visual-studio-sdks).
 - Paint.NET (installed, store, or portable version). [Get it from the official website](https://www.getpaint.net) or [the Microsoft Store](https://www.microsoft.com/en-us/p/paintnet/9nbhcs1lx4r0).
 
-After building, you should copy the DLL of the plugin, it's .deps.json file, and all the DLLs required specified inside the `"dependencies":` entry inside the .deps.json.
+After building, you should copy the DLL of the plugin, it's .deps.json file, and all the DLLs required specified inside the `"dependencies":` entry inside the .deps.json to `%PDNINSTALLDIR%\FileTypes\TXTRFileType`.
 
 ### Environment Variables And Post Build Event
 There is a post build event that copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory).
