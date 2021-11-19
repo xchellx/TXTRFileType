@@ -14,7 +14,7 @@ With this you'll be able to extract, edit, and create TXTR texture files for or 
 
 
 ### Environment Variables And Post Build Event
-There is a post post build event copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory). The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must be manually copied to the plugin directory.
+There is a post build event that copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory). The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must be manually copied to the plugin directory.
 
 The project and the post build event depends on some environment variables:
 
