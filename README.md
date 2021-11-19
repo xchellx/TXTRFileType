@@ -12,6 +12,7 @@ With this you'll be able to extract, edit, and create TXTR texture files for or 
 - .NET 5.0 SDK. [Get it here](https://dotnet.microsoft.com/download/visual-studio-sdks).
 - Paint.NET (installed, store, or portable version). [Get it from the official website](https://www.getpaint.net) or [the Microsoft Store](https://www.microsoft.com/en-us/p/paintnet/9nbhcs1lx4r0).
 
+After building, you should copy the DLL of the plugin, it's .deps.json file, and all the DLLs required specified inside the `"dependencies":` entry inside the .deps.json.
 
 ### Environment Variables And Post Build Event
 There is a post build event that copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory). The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must be manually copied to the plugin directory.
@@ -23,6 +24,18 @@ The project and the post build event depends on some environment variables:
 - Set the environment variable "PDNPLUGINTYPE" to "FileType" or "Effect" according to what type of plugin you are making. This is required to prevent post build event from failing.
 
 You can set this variables using either the `SETX` command or `Control Panel -> System -> Advanced System Properties -> Environment Variables`
+
+With the `SETX` command, it's as simple as `SETX VARIABLENAME "VARIABLECONTENT"` where `VARIABLENAME` is the name of the variable to set and `VARIABLECONTENT` is the value of the variable to set.
+
+With the `Control Panel` method, you just click `New` then fill in `Variable name:` and `Variable value:` and press OK.
+
+After adding the environment variables, restart Visual Studio if you had it open when doing this.
+
+For `PDNINSTALLDIR` should be where you have paint.net installed, whether that be the path to the installed version, portable version, or store version.
+
+For `PDNENABLEPBE` should be `"true"` if you wish to debug, otherwise keep it `"false"`.
+
+For `PDNPLUGINTYPE` should be `"FileType"` as this is a FileType plugin.
 
 ## License
 ```
