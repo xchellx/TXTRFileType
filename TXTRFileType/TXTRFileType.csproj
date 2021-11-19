@@ -66,7 +66,6 @@
   <!-- Example: SETX PDNINSTALLDIR "C:\Program Files\paint.net" -->
   
   <!-- Set the environment variable "PDNENABLEPBE" to 'true' to enable post build event and set to 'false' disable it. -->
-  <!-- This is required to be disabled to prevent publish templates from failing. Otherwise, enable it for debugging. -->
   <!-- Example: SETX PDNENABLEPBE "true" -->
   
   <!-- Set the environment variable "PDNPLUGINTYPE" to "FileType" or "Effect" according to what type of plugin you are making. -->

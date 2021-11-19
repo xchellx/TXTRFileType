@@ -1,4 +1,22 @@
-﻿using SixLabors.ImageSharp;
+﻿/*
+TXTRFileType
+Copyright (C) 2021 xchellx
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Runtime.InteropServices;
@@ -47,7 +65,7 @@ namespace TXTRFileType.Util
         {
             int widthLevels = (int)Math.Floor(Math.Log(width, 2)) - Math.Max(sizeLimit / 2, 0),
                 heightLevels = (int)Math.Floor(Math.Log(height, 2)) - Math.Max(sizeLimit / 2, 0);
-            return Math.Max(widthLevels < heightLevels ? widthLevels : heightLevels, 0);
+            return Math.Max(widthLevels < heightLevels ? widthLevels : heightLevels, 0) + 1;
         }
 
         #endregion

@@ -101,25 +101,25 @@ namespace libWiiSharp
             switch (textureFormat)
             {
                 case TextureFormat.I4:
-                    textureData = toI4(img);
+                    textureData = toI4(img, textureFormat);
                     break;
                 case TextureFormat.I8:
-                    textureData = toI8(img);
+                    textureData = toI8(img, textureFormat);
                     break;
                 case TextureFormat.IA4:
-                    textureData = toIA4(img);
+                    textureData = toIA4(img, textureFormat);
                     break;
                 case TextureFormat.IA8:
-                    textureData = toIA8(img);
+                    textureData = toIA8(img, textureFormat);
                     break;
                 case TextureFormat.RGB565:
-                    textureData = toRGB565(img);
+                    textureData = toRGB565(img, textureFormat);
                     break;
                 case TextureFormat.RGB5A3:
-                    textureData = toRGB5A3(img);
+                    textureData = toRGB5A3(img, textureFormat);
                     break;
                 case TextureFormat.RGBA32:
-                    textureData = toRGBA32(img);
+                    textureData = toRGBA32(img, textureFormat);
                     break;
                 case TextureFormat.CI4:
                 case TextureFormat.CI8:
@@ -127,7 +127,7 @@ namespace libWiiSharp
                     // Assigned later on
                     break;
                 case TextureFormat.CMPR:
-                    textureData = toCMPR(img);
+                    textureData = toCMPR(img, textureFormat);
                     break;
                 default:
                     throw new NotSupportedException($"Texture format '{textureFormat}' ({(uint)textureFormat:X8}) is not supported");
@@ -180,7 +180,7 @@ namespace libWiiSharp
                 case TextureFormat.CI14X2:
                     return Shared.AddPadding(width, 4) * Shared.AddPadding(height, 4) * 2;
                 case TextureFormat.CMPR:
-                    return width * height;
+                    return Shared.AddPadding(width, 4) * Shared.AddPadding(height, 4) * 4;
                 default:
                     throw new NotSupportedException($"Texture format '{textureFormat}' ({(uint)textureFormat:X8}) is not supported");
             }
@@ -329,13 +329,13 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toRGBA32(Image<Bgra32> img)
+        private static byte[] toRGBA32(Image<Bgra32> img, TextureFormat textureFormat)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
             int h = img.Height;
             int z = 0, iv = 0;
-            byte[] output = new byte[Shared.AddPadding(w, 4) * Shared.AddPadding(h, 4) * 4];
+            byte[] output = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
             uint[] lr = new uint[32], lg = new uint[32], lb = new uint[32], la = new uint[32];
 
             for (int y1 = 0; y1 < h; y1 += 4)
@@ -429,13 +429,13 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toRGB5A3(Image<Bgra32> img)
+        private static byte[] toRGB5A3(Image<Bgra32> img, TextureFormat textureFormat)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
             int h = img.Height;
             int z = -1;
-            byte[] output = new byte[Shared.AddPadding(w, 4) * Shared.AddPadding(h, 4) * 2];
+            byte[] output = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
 
             for (int y1 = 0; y1 < h; y1 += 4)
             {
@@ -525,13 +525,13 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toRGB565(Image<Bgra32> img)
+        private static byte[] toRGB565(Image<Bgra32> img, TextureFormat textureFormat)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
             int h = img.Height;
             int z = -1;
-            byte[] output = new byte[Shared.AddPadding(w, 4) * Shared.AddPadding(h, 4) * 2];
+            byte[] output = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
 
             for (int y1 = 0; y1 < h; y1 += 4)
             {
@@ -599,13 +599,13 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toI4(Image<Bgra32> img)
+        private static byte[] toI4(Image<Bgra32> img, TextureFormat textureFormat)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
             int h = img.Height;
             int inp = 0;
-            byte[] output = new byte[Shared.AddPadding(w, 8) * Shared.AddPadding(h, 8) / 2];
+            byte[] output = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
 
             for (int y1 = 0; y1 < h; y1 += 8)
             {
@@ -679,13 +679,13 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toI8(Image<Bgra32> img)
+        private static byte[] toI8(Image<Bgra32> img, TextureFormat textureFormat)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
             int h = img.Height;
             int inp = 0;
-            byte[] output = new byte[Shared.AddPadding(w, 8) * Shared.AddPadding(h, 4)];
+            byte[] output = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
 
             for (int y1 = 0; y1 < h; y1 += 4)
             {
@@ -751,13 +751,13 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toIA4(Image<Bgra32> img)
+        private static byte[] toIA4(Image<Bgra32> img, TextureFormat textureFormat)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
             int h = img.Height;
             int inp = 0;
-            byte[] output = new byte[Shared.AddPadding(w, 8) * Shared.AddPadding(h, 4)];
+            byte[] output = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
 
             for (int y1 = 0; y1 < h; y1 += 4)
             {
@@ -826,13 +826,13 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(output);
         }
 
-        private static byte[] toIA8(Image<Bgra32> img)
+        private static byte[] toIA8(Image<Bgra32> img, TextureFormat textureFormat)
         {
             uint[] pixeldata = imageToRgba(img);
             int w = img.Width;
             int h = img.Height;
             int inp = 0;
-            byte[] output = new byte[Shared.AddPadding(w, 4) * Shared.AddPadding(h, 4) * 2];
+            byte[] output = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
 
             for (int y1 = 0; y1 < h; y1 += 4)
             {
@@ -984,6 +984,7 @@ namespace libWiiSharp
             // Gives type safe managed access to array memory; for BCnEncoder.NET
             Span2D<ColorRgba32> rgbaSpan = rgba.AsSpan2D();
             uint[] bgra = new uint[width * height];
+            System.Diagnostics.Debug.WriteLine("test");
             for (int ty = 0; ty < height; ty += 8)
             {
                 for (int tx = 0; tx < width; tx += 8)
@@ -1005,7 +1006,7 @@ namespace libWiiSharp
                                 for (int py = 0; py < 4; py++)
                                 {
                                     // Discard exceeding pixels caused by extra GX blocks
-                                    if ((ty + by + py) < width && (tx + bx + px) < height)
+                                    if ((ty + by + py) * width + (tx + bx + px) < bgra.Length)
                                     {
                                         // Pack color to correct position
                                         bgra[(ty + by + py) * width + (tx + bx + px)] = (uint)(
@@ -1022,9 +1023,9 @@ namespace libWiiSharp
             return Shared.UIntArrayToByteArray(bgra);
         }
 
-        private static byte[] toCMPR(Image<Bgra32> img)
+        private static byte[] toCMPR(Image<Bgra32> img, TextureFormat textureFormat)
         {
-            byte[] texture = new byte[Shared.AddPadding(img.Width, 4) * Shared.AddPadding(img.Height, 4)];
+            byte[] texture = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
             // BC1 with 1 bit Alpha
             BcEncoder bc1Encoder = new BcEncoder(CompressionFormat.Bc1WithAlpha);
             // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
@@ -1035,9 +1036,10 @@ namespace libWiiSharp
             ColorRgba32[,] rgba = new ColorRgba32[4, 4];
             // Gives type safe managed access to array memory; for BCnEncoder.NET
             ReadOnlySpan2D<ColorRgba32> rgbaSpan = rgba.AsSpan2D();
-            // Image to packed uints
+            // Image to packed uint
             uint[] bgra = imageToRgba(img);
-            for (int ty = 0; ty < img.Height; ty += 8)
+            System.Diagnostics.Debug.WriteLine("test");
+            for (int ty = 0; ty < img.Width; ty += 8)
             {
                 for (int tx = 0; tx < img.Width; tx += 8)
                 {
@@ -1051,13 +1053,21 @@ namespace libWiiSharp
                                 for (int py = 0; py < 4; py++)
                                 {
                                     // Discard exceeding pixels caused by extra GX blocks
-                                    if ((ty + by + py) < img.Width && (tx + bx + px) < img.Height)
+                                    if ((ty + by + py) * img.Width + (tx + bx + px) < bgra.Length)
                                     {
                                         // Unpack color to correct position
                                         rgba[py, px].r = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 16);
                                         rgba[py, px].g = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 8);
                                         rgba[py, px].b = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 0);
                                         rgba[py, px].a = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 24);
+                                    }
+                                    else
+                                    {
+                                        // Add dummy color for extra GX blocks
+                                        rgba[py, px].r = 0;
+                                        rgba[py, px].g = 0;
+                                        rgba[py, px].b = 0;
+                                        rgba[py, px].a = 0;
                                     }
                                 }
                             }
@@ -1115,7 +1125,7 @@ namespace libWiiSharp
             #region Private Functions
             private void toCI4()
             {
-                byte[] indexData = new byte[libWiiSharp.Shared.AddPadding(width, 8) * libWiiSharp.Shared.AddPadding(height, 8) / 2];
+                byte[] indexData = new byte[GetTextureSize(textureFormat, width, height)];
                 int i = 0;
 
                 for (int y = 0; y < height; y += 8)
@@ -1155,7 +1165,7 @@ namespace libWiiSharp
 
             private void toCI8()
             {
-                byte[] indexData = new byte[libWiiSharp.Shared.AddPadding(width, 8) * libWiiSharp.Shared.AddPadding(height, 4)];
+                byte[] indexData = new byte[GetTextureSize(textureFormat, width, height)];
                 int i = 0;
 
                 for (int y = 0; y < height; y += 4)
@@ -1184,7 +1194,7 @@ namespace libWiiSharp
 
             private void toCI14X2()
             {
-                byte[] indexData = new byte[libWiiSharp.Shared.AddPadding(width, 4) * libWiiSharp.Shared.AddPadding(height, 4) * 2];
+                byte[] indexData = new byte[GetTextureSize(textureFormat, width, height)];
                 int i = 0;
 
                 for (int y = 0; y < height; y += 4)

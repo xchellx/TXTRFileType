@@ -1,4 +1,22 @@
-﻿using libWiiSharp;
+﻿/*
+TXTRFileType
+Copyright (C) 2021 xchellx
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+using libWiiSharp;
 using libWiiSharp.Formats;
 using PaintDotNet;
 using SixLabors.ImageSharp;
@@ -35,6 +53,9 @@ namespace TXTRFileType
                     LoadExtensions = new string[] { ".TXTR" },
                     SaveExtensions = new string[] { ".TXTR" },
                     SupportsCancellation = true,
+                    // This MUST be false despite the bug of layer flattening not respecting actual saved
+                    // layered mipmap data.
+                    // A reload of the file will fix this issue.
                     SupportsLayers = false
                 })
         {
@@ -100,7 +121,7 @@ namespace TXTRFileType
                 using (Image<Bgra32> imgPdn = ImageUtil.ToImage<Bgra32>(((BitmapLayer)input.Layers[0]).Surface.Scan0.ToByteArray(),
                     mipWidth, mipHeight))
                 {
-                    // Flip indexed formats on save only (texture converter did the flipping for us at load)
+                    // Do not flip indexed formats, the texture converter does the flipping for us at load
                     if (!isIndexed)
                         imgPdn.Mutate(x => x.Flip(FlipMode.Vertical));
                     (byte[] textureData, byte[] paletteData, ushort paletteWidth, ushort paletteHeight)
@@ -123,8 +144,8 @@ namespace TXTRFileType
                     // Write mipmaps
                     for (int mipLevel = 0; mipLevel < mipCount - 1; mipLevel++)
                     {
-                        mipWidth /= 2;
-                        mipHeight /= 2;
+                        mipWidth = (ushort)Math.Ceiling((double)mipWidth / 2);
+                        mipHeight = (ushort)Math.Ceiling((double)mipHeight / 2);
 
                         // Resize image with box filter 
                         imgPdn.Mutate(x => x.Resize(new ResizeOptions()
@@ -224,15 +245,15 @@ namespace TXTRFileType
                             for (int x = 0; x < row.Length; x++)
                             {
                                 ref Bgra32 pixel = ref row[x];
-                                // Flip indexed formats on save only (texture converter did the flipping for us at load)
+                                // Do not flip indexed formats, the texture converter does the flipping for us at load
                                 PDNUtil.SetPixel(ref layer, x, y, false, !isIndexed, pixel.R, pixel.G, pixel.B, pixel.A);
                             }
                         }
                     }
 
                     document.Layers.Add(layer);
-                    mipWidth /= 2;
-                    mipHeight /= 2;
+                    mipWidth = (ushort)Math.Ceiling((double)mipWidth / 2);
+                    mipHeight = (ushort)Math.Ceiling((double)mipHeight / 2);
                 }
 
                 return document;
