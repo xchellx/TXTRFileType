@@ -12,13 +12,12 @@ With this you'll be able to extract, edit, and create TXTR texture files for or 
 - .NET 5.0 SDK. [Get it here](https://dotnet.microsoft.com/download/visual-studio-sdks).
 - Paint.NET (installed, store, or portable version). [Get it from the official website](https://www.getpaint.net) or [the Microsoft Store](https://www.microsoft.com/en-us/p/paintnet/9nbhcs1lx4r0).
 
-There is a post build event that depends on environment variables:
+There is a post post build event copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory). The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must be manually copied to the plugin directory.
+The project and the post build event depends on some environment variables:
 
 - Set the environment variable "PDNINSTALLDIR" to the path of your Paint.NET install directory. This is required for the PostBuild event and for the paint.net DLL references.
 - Set the environment variable "PDNENABLEPBE" to 'true' to enable post build event and set to 'false' disable it.
 - Set the environment variable "PDNPLUGINTYPE" to "FileType" or "Effect" according to what type of plugin you are making. This is required to prevent post build event from failing.
-
-The post build event copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory). The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must be manually copied to the plugin directory.
 
 ## LICENSE
 ```
