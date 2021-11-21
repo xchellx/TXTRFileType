@@ -32,9 +32,9 @@ namespace TXTRFileType
         private ComboBox textureFormatComboBox;
         private Label paletteFormatLabel;
         private ComboBox paletteFormatComboBox;
-        private CheckBox generateMipmapsCheckBox;
         private Label paletteLengthCopyLocationLabel;
         private ComboBox paletteLengthCopyLocationComboBox;
+        private CheckBox generateMipmapsCheckBox;
 
         //// END DESIGNER STUFF ////
         //// START PAINT.NET STUFF ////
@@ -53,10 +53,10 @@ namespace TXTRFileType
             TXTRFileTypeSaveConfigToken token = (TXTRFileTypeSaveConfigToken)Token;
             token.TextureFormat = (TextureFormat)((UIUtil.ComboBoxEnumItem<TextureFormat>)textureFormatComboBox.SelectedItem).Value;
             token.TexturePalette = (PaletteFormat)((UIUtil.ComboBoxEnumItem<PaletteFormat>)paletteFormatComboBox.SelectedItem).Value;
-            token.GenerateMipmaps = generateMipmapsCheckBox.Checked;
             token.PaletteLengthCopyLocation = (TextureConverter.PaletteLengthCopyLocation)
                 ((UIUtil.ComboBoxEnumItem<TextureConverter.PaletteLengthCopyLocation>)
                 paletteLengthCopyLocationComboBox.SelectedItem).Value;
+            token.GenerateMipmaps = generateMipmapsCheckBox.Checked;
         }
 
         protected override void InitWidgetFromToken(SaveConfigToken sourceToken)
@@ -64,9 +64,9 @@ namespace TXTRFileType
             TXTRFileTypeSaveConfigToken token = (TXTRFileTypeSaveConfigToken)sourceToken;
             textureFormatComboBox.SelectedItem = UIUtil.ComboBoxEnumItem<TextureFormat>.CreateComboBoxEnumItem(token.TextureFormat);
             paletteFormatComboBox.SelectedItem = UIUtil.ComboBoxEnumItem<PaletteFormat>.CreateComboBoxEnumItem(token.TexturePalette);
-            generateMipmapsCheckBox.Checked = token.GenerateMipmaps;
             paletteLengthCopyLocationComboBox.SelectedItem = UIUtil.ComboBoxEnumItem<TextureConverter.PaletteLengthCopyLocation>
                 .CreateComboBoxEnumItem(token.PaletteLengthCopyLocation);
+            generateMipmapsCheckBox.Checked = token.GenerateMipmaps;
         }
 
         private void tokenChanged(object sender, EventArgs e)
@@ -106,9 +106,9 @@ namespace TXTRFileType
             this.textureFormatComboBox = new System.Windows.Forms.ComboBox();
             this.paletteFormatLabel = new System.Windows.Forms.Label();
             this.paletteFormatComboBox = new System.Windows.Forms.ComboBox();
-            this.generateMipmapsCheckBox = new System.Windows.Forms.CheckBox();
             this.paletteLengthCopyLocationLabel = new System.Windows.Forms.Label();
             this.paletteLengthCopyLocationComboBox = new System.Windows.Forms.ComboBox();
+            this.generateMipmapsCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // textureFormatLabel
@@ -162,24 +162,11 @@ namespace TXTRFileType
             this.paletteFormatComboBox.TabIndex = 2;
             this.paletteFormatComboBox.SelectionChangeCommitted += new System.EventHandler(this.tokenChanged);
             // 
-            // generateMipmapsCheckBox
-            // 
-            this.generateMipmapsCheckBox.AutoSize = true;
-            this.generateMipmapsCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.generateMipmapsCheckBox.Location = new System.Drawing.Point(0, 140);
-            this.generateMipmapsCheckBox.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
-            this.generateMipmapsCheckBox.Name = "generateMipmapsCheckBox";
-            this.generateMipmapsCheckBox.Size = new System.Drawing.Size(156, 22);
-            this.generateMipmapsCheckBox.TabIndex = 3;
-            this.generateMipmapsCheckBox.Text = "Generate Mipmaps";
-            this.generateMipmapsCheckBox.UseVisualStyleBackColor = true;
-            this.generateMipmapsCheckBox.CheckedChanged += new System.EventHandler(this.tokenChanged);
-            // 
             // paletteLengthCopyLocationLabel
             // 
             this.paletteLengthCopyLocationLabel.AutoSize = true;
             this.paletteLengthCopyLocationLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.paletteLengthCopyLocationLabel.Location = new System.Drawing.Point(0, 178);
+            this.paletteLengthCopyLocationLabel.Location = new System.Drawing.Point(0, 140);
             this.paletteLengthCopyLocationLabel.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
             this.paletteLengthCopyLocationLabel.Name = "paletteLengthCopyLocationLabel";
             this.paletteLengthCopyLocationLabel.Size = new System.Drawing.Size(205, 18);
@@ -193,7 +180,7 @@ namespace TXTRFileType
             this.paletteLengthCopyLocationComboBox.Enabled = false;
             this.paletteLengthCopyLocationComboBox.ForeColor = System.Drawing.SystemColors.ControlText;
             this.paletteLengthCopyLocationComboBox.FormattingEnabled = true;
-            this.paletteLengthCopyLocationComboBox.Location = new System.Drawing.Point(0, 204);
+            this.paletteLengthCopyLocationComboBox.Location = new System.Drawing.Point(0, 166);
             this.paletteLengthCopyLocationComboBox.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
             this.paletteLengthCopyLocationComboBox.MinimumSize = new System.Drawing.Size(205, 0);
             this.paletteLengthCopyLocationComboBox.Name = "paletteLengthCopyLocationComboBox";
@@ -201,21 +188,34 @@ namespace TXTRFileType
             this.paletteLengthCopyLocationComboBox.TabIndex = 4;
             this.paletteLengthCopyLocationComboBox.SelectionChangeCommitted += new System.EventHandler(this.tokenChanged);
             // 
+            // generateMipmapsCheckBox
+            // 
+            this.generateMipmapsCheckBox.AutoSize = true;
+            this.generateMipmapsCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.generateMipmapsCheckBox.Location = new System.Drawing.Point(0, 210);
+            this.generateMipmapsCheckBox.Margin = new System.Windows.Forms.Padding(0);
+            this.generateMipmapsCheckBox.Name = "generateMipmapsCheckBox";
+            this.generateMipmapsCheckBox.Size = new System.Drawing.Size(156, 22);
+            this.generateMipmapsCheckBox.TabIndex = 3;
+            this.generateMipmapsCheckBox.Text = "Generate Mipmaps";
+            this.generateMipmapsCheckBox.UseVisualStyleBackColor = true;
+            this.generateMipmapsCheckBox.CheckedChanged += new System.EventHandler(this.tokenChanged);
+            // 
             // TXTRFileTypeSaveConfigWidget
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.Controls.Add(this.paletteLengthCopyLocationLabel);
-            this.Controls.Add(this.paletteLengthCopyLocationComboBox);
             this.Controls.Add(this.textureFormatLabel);
             this.Controls.Add(this.textureFormatComboBox);
             this.Controls.Add(this.paletteFormatLabel);
             this.Controls.Add(this.paletteFormatComboBox);
+            this.Controls.Add(this.paletteLengthCopyLocationLabel);
+            this.Controls.Add(this.paletteLengthCopyLocationComboBox);
             this.Controls.Add(this.generateMipmapsCheckBox);
             this.MinimumSize = new System.Drawing.Size(200, 200);
             this.Name = "TXTRFileTypeSaveConfigWidget";
-            this.Size = new System.Drawing.Size(205, 248);
+            this.Size = new System.Drawing.Size(205, 232);
             this.ResumeLayout(false);
             this.PerformLayout();
 

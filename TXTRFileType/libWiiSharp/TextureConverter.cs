@@ -1020,7 +1020,7 @@ namespace libWiiSharp
 
         private static byte[] toCMPR(Image<Bgra32> img, TextureFormat textureFormat)
         {
-            byte[] texture = new byte[GetTextureSize(textureFormat, img.Width, img.Height) * 2];
+            byte[] texture = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
             // BC1 with 1 bit Alpha
             BcEncoder bc1Encoder = new BcEncoder(CompressionFormat.Bc1WithAlpha);
             // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
