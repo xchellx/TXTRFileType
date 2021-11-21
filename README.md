@@ -1,6 +1,8 @@
 # TXTRFileType
 TXTR file type plugin for Paint.NET to load TXTR files from the Metroid Prime series.
-With this you'll be able to extract, edit, and create TXTR texture files for or from the Metroid prime series. GX2 support is not included and not planned therefore TXTR files from the Donkey Kong Country Returns and Donkey Kong Country: Tropical Freeze games is not supported. This is open for contributions, however.
+With this you'll be able to extract, edit, and create TXTR texture files for or from the Metroid prime series.
+
+**Note:** GX2 support is not included and not planned therefore TXTR files from the Donkey Kong Country Returns and Donkey Kong Country: Tropical Freeze games are not supported. This is open for contributions, however.
 
 ## Features
 - Supports loading and saving all texture formats
@@ -18,13 +20,15 @@ After building, you should copy the DLL of the plugin, it's .deps.json file, and
 ### Environment Variables And Post Build Event
 There is a post build event that copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory).
 
-If this post build event is disabled, then dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must be manually copied to the plugin directory.
+The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must always be manually copied to the plugin directory.
+
+If this post build event is disabled, then plugin DLL and .deps.json file must be manually copied to the plugin directory.
 
 The project and the post build event depends on some environment variables:
 
-- Set the environment variable "PDNINSTALLDIR" to the path of your Paint.NET install directory. This is required for the PostBuild event and for the paint.net DLL references.
-- Set the environment variable "PDNENABLEPBE" to 'true' to enable post build event and set to 'false' disable it.
-- Set the environment variable "PDNPLUGINTYPE" to "FileType" or "Effect" according to what type of plugin you are making. This is required to prevent post build event from failing.
+- Set the environment variable `PDNINSTALLDIR` to where you have paint.net installed, whether that be the path to the installed version, portable version, or store version. Example: `C:\Program Files\paint.net` (no leading backslash). This is required for the PostBuild event and for the paint.net DLL references.
+- Set the environment variable `PDNENABLEPBE` to 'true' to enable post build event and set to `"false"` disable it. Unless you are debugging, set to `"false"` otherwise keep it `"true"`.
+- Set the environment variable `PDNPLUGINTYPE` to `"FileType"` or `"Effect"` according to what type of plugin you are making. This is required to prevent post build event from failing. For this plugin, it's a FileType so set to `"FileType"`.
 
 You can set this variables using either the `SETX` command or `Control Panel -> System -> Advanced System Properties -> Environment Variables`
 
@@ -32,13 +36,7 @@ With the `SETX` command, it's as simple as `SETX VARIABLENAME "VARIABLECONTENT"`
 
 With the `Control Panel` method, you just click `New` then fill in `Variable name:` and `Variable value:` and press OK.
 
-After adding the environment variables, restart Visual Studio if you had it open when doing this.
-
-For `PDNINSTALLDIR` should be where you have paint.net installed, whether that be the path to the installed version, portable version, or store version.
-
-For `PDNENABLEPBE` should be `"true"` if you wish to debug, otherwise keep it `"false"`.
-
-For `PDNPLUGINTYPE` should be `"FileType"` as this is a FileType plugin.
+After adding the environment variables, restart Visual Studio if you had it open when doing this. If the variables still do not resolve, force close `explorer.exe` and restart it. If still not working, restart your PC.
 
 ## License
 ```

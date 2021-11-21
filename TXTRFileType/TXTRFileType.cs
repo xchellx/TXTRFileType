@@ -236,7 +236,8 @@ namespace TXTRFileType
 
                     // Convert image data and load it
                     using (Image<Bgra32> image = TextureConverter.ExtractTexture(textureFormat, paletteFormat,
-                        br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)), paletteData, mipWidth, mipHeight))
+                        br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)),
+                        paletteData, mipWidth, mipHeight))
                     {
                         // Write converted pixel data to Paint.NET layer
                         for (int y = 0; y < image.Height; y++)

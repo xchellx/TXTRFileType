@@ -180,7 +180,7 @@ namespace libWiiSharp
                 case TextureFormat.CI14X2:
                     return Shared.AddPadding(width, 4) * Shared.AddPadding(height, 4) * 2;
                 case TextureFormat.CMPR:
-                    return Shared.AddPadding(width, 4) * Shared.AddPadding(height, 4) * 4;
+                    return Shared.AddPadding(width, 8) * Shared.AddPadding(height, 8) / 2;
                 default:
                     throw new NotSupportedException($"Texture format '{textureFormat}' ({(uint)textureFormat:X8}) is not supported");
             }
@@ -975,16 +975,11 @@ namespace libWiiSharp
             BcDecoder bc1Decoder = new BcDecoder();
             // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
             byte[] block = new byte[8];
-            // Gives type safe managed access to array memory; for BCnEncoder.NET
-            Span<byte> blockSpan = block.AsSpan();
             // Data read position
             long offset = 0L;
             // { r1, g1, b1, a1, ..., r16, g16, b16, a16 }
             ColorRgba32[,] rgba = new ColorRgba32[4, 4];
-            // Gives type safe managed access to array memory; for BCnEncoder.NET
-            Span2D<ColorRgba32> rgbaSpan = rgba.AsSpan2D();
             uint[] bgra = new uint[width * height];
-            System.Diagnostics.Debug.WriteLine("test");
             for (int ty = 0; ty < height; ty += 8)
             {
                 for (int tx = 0; tx < width; tx += 8)
@@ -999,14 +994,14 @@ namespace libWiiSharp
                             // Fix DXTBlock endianness
                             S3TC1ReverseBlock(ref block);
                             // BC1 with 1 bit Alpha
-                            bc1Decoder.DecodeBlock(blockSpan, CompressionFormat.Bc1WithAlpha, rgbaSpan);
+                            bc1Decoder.DecodeBlock(block, CompressionFormat.Bc1WithAlpha, rgba);
                             // Write decompressed 16 bit block to pixels
-                            for (int px = 0; px < 4; px++)
+                            for (int py = 0; py < 4; py++)
                             {
-                                for (int py = 0; py < 4; py++)
+                                for (int px = 0; px < 4; px++)
                                 {
                                     // Discard exceeding pixels caused by extra GX blocks
-                                    if ((ty + by + py) * width + (tx + bx + px) < bgra.Length)
+                                    if ((ty + by + py) < height && (tx + bx + px) < width)
                                     {
                                         // Pack color to correct position
                                         bgra[(ty + by + py) * width + (tx + bx + px)] = (uint)(
@@ -1025,7 +1020,7 @@ namespace libWiiSharp
 
         private static byte[] toCMPR(Image<Bgra32> img, TextureFormat textureFormat)
         {
-            byte[] texture = new byte[GetTextureSize(textureFormat, img.Width, img.Height)];
+            byte[] texture = new byte[GetTextureSize(textureFormat, img.Width, img.Height) * 2];
             // BC1 with 1 bit Alpha
             BcEncoder bc1Encoder = new BcEncoder(CompressionFormat.Bc1WithAlpha);
             // struct DXTBlock { uint16_t color1; uint16_t color2; uint8_t lines[4]; }
@@ -1033,46 +1028,45 @@ namespace libWiiSharp
             // Data write position
             long offset = 0L;
             // { r1, g1, b1, a1, ..., r16, g16, b16, a16 }
-            ColorRgba32[,] rgba = new ColorRgba32[4, 4];
-            // Gives type safe managed access to array memory; for BCnEncoder.NET
-            ReadOnlySpan2D<ColorRgba32> rgbaSpan = rgba.AsSpan2D();
+            ColorRgba32[] rgba = new ColorRgba32[16];
             // Image to packed uint
             uint[] bgra = imageToRgba(img);
-            System.Diagnostics.Debug.WriteLine("test");
-            for (int ty = 0; ty < img.Width; ty += 8)
+            for (int ty = 0; ty < img.Height; ty += 8)
             {
                 for (int tx = 0; tx < img.Width; tx += 8)
                 {
+                    // Read pixels as decompressed 16 bit blocks
                     for (int by = 0; by < 8; by += 4)
                     {
                         for (int bx = 0; bx < 8; bx += 4)
                         {
                             // Read pixels as decompressed 16 bit blocks
-                            for (int px = 0; px < 4; px++)
+                            for (int py = 0; py < 4; py++)
                             {
-                                for (int py = 0; py < 4; py++)
+                                for (int px = 0; px < 4; px++)
                                 {
+                                    int pi = (py * 4) + px;
                                     // Discard exceeding pixels caused by extra GX blocks
-                                    if ((ty + by + py) * img.Width + (tx + bx + px) < bgra.Length)
+                                    if ((ty + by + py) < img.Height && (tx + bx + px) < img.Width)
                                     {
                                         // Unpack color to correct position
-                                        rgba[py, px].r = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 16);
-                                        rgba[py, px].g = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 8);
-                                        rgba[py, px].b = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 0);
-                                        rgba[py, px].a = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 24);
+                                        rgba[pi].r = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 16);
+                                        rgba[pi].g = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 8);
+                                        rgba[pi].b = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 0);
+                                        rgba[pi].a = (byte)(bgra[(ty + by + py) * img.Width + (tx + bx + px)] >> 24);
                                     }
                                     else
                                     {
                                         // Add dummy color for extra GX blocks
-                                        rgba[py, px].r = 0;
-                                        rgba[py, px].g = 0;
-                                        rgba[py, px].b = 0;
-                                        rgba[py, px].a = 0;
+                                        rgba[pi].r = 0;
+                                        rgba[pi].g = 0;
+                                        rgba[pi].b = 0;
+                                        rgba[pi].a = 0;
                                     }
                                 }
                             }
                             // BC1 with 1 bit Alpha
-                            Array.Copy(bc1Encoder.EncodeBlock(rgbaSpan), 0, block, 0, 8);
+                            Array.Copy(bc1Encoder.EncodeBlock(rgba), 0, block, 0, 8);
                             // Fix DXTBlock endianness
                             S3TC1ReverseBlock(ref block);
                             // Write compressed 8 bit block to pixels
