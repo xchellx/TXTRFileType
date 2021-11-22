@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -69,57 +70,54 @@ namespace TXTRFileType.Util
             };
         }
 
-        /// <summary>Specifies a title for a enum to use with <see cref="BindEnumToCombobox{TEnum}(ComboBox, TEnum, bool)" />.</summary>
+        /// <summary>
+        /// Specifies a title for a enum in usage of a <see cref="ComboBoxEnumItem{TEnum}"/>.
+        /// </summary>
         [AttributeUsage(AttributeTargets.Field)]
         public class EnumTitleForComboBoxAttribute : Attribute
         {
             /// <summary>
-            /// Specifies the default value for the <see cref="EnumTitleForComboBoxAttribute" />,
-            /// which is an empty string (""). This static field is read-only.
+            /// Specifies the default value for the <see cref='EnumTitleForComboBoxAttribute'/>,
+            /// which is an empty string (""). This <see langword='static'/> field is read-only.
             /// </summary>
             public static readonly EnumTitleForComboBoxAttribute Default = new EnumTitleForComboBoxAttribute();
 
-            private string title;
+            public EnumTitleForComboBoxAttribute() : this(string.Empty)
+            {
+            }
 
-            /// <summary>Gets the title stored in this attribute.</summary>
-            /// <returns>The title stored in this attribute.</returns>
+            /// <summary>
+            /// Initializes a new instance of the <see cref='EnumTitleForComboBoxAttribute'/> class.
+            /// </summary>
+            public EnumTitleForComboBoxAttribute(string title)
+            {
+                TitleValue = title;
+            }
+
+            /// <summary>
+            /// Gets the title stored in this attribute.
+            /// </summary>
             public virtual string Title => TitleValue;
 
-            /// <summary>Gets or sets the string stored as the title.</summary>
-            /// <returns>The string stored as the title. The default value is an empty string ("").</returns>
-            protected string TitleValue { get { return title; } set { title = value; } }
+            /// <summary>
+            /// Read/Write property that directly modifies the string stored in the title
+            /// attribute. The default implementation of the <see cref="Title"/> property
+            /// simply returns this value.
+            /// </summary>
+            protected string TitleValue { get; set; }
 
-            /// <summary>Initializes a new instance of the <see cref="EnumTitleForComboBoxAttribute" /> class with no parameters.</summary>
-            public EnumTitleForComboBoxAttribute() : this(string.Empty) { }
-
-            /// <summary>Initializes a new instance of the <see cref="EnumTitleForComboBoxAttribute" /> class with a title.</summary>
-            /// <param name="title">The title text. </param>
-            public EnumTitleForComboBoxAttribute(string title) { this.title = title; }
-
-            /// <summary>Returns whether the value of the given object is equal to the current <see cref="EnumTitleForComboBoxAttribute" />.</summary>
-            /// <returns>true if the value of the given object is equal to that of the current; otherwise, false.</returns>
-            /// <param name="obj">The object to test the value equality of. </param>
-            public override bool Equals(object obj)
-            {
-                if (obj == this)
-                    return true;
-                EnumTitleForComboBoxAttribute enumTitleForComboBoxAttribute = obj as EnumTitleForComboBoxAttribute;
-                if (enumTitleForComboBoxAttribute != null)
-                    return enumTitleForComboBoxAttribute.Title == Title;
-                return false;
-            }
+            public override bool Equals([NotNullWhen(true)] object? obj) =>
+                obj is EnumTitleForComboBoxAttribute other && other.Title == Title;
 
             private int? hashCache = null;
             public override int GetHashCode()
             {
                 if (!hashCache.HasValue)
-                    hashCache = Title.GetHashCode();
+                    hashCache = Title?.GetHashCode() ?? 0;
                 return hashCache.Value;
             }
 
-            /// <summary>Returns a value indicating whether this is the default <see cref="EnumTitleForComboBoxAttribute" /> instance.</summary>
-            /// <returns>true, if this is the default <see cref="EnumTitleForComboBoxAttribute" /> instance; otherwise, false.</returns>
-            public override bool IsDefaultAttribute() { return Equals(Default); }
+            public override bool IsDefaultAttribute() => Equals(Default);
         }
 
         /// <summary>Convenience fields</summary>

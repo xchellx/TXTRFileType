@@ -1035,7 +1035,6 @@ namespace libWiiSharp
             {
                 for (int tx = 0; tx < img.Width; tx += 8)
                 {
-                    // Read pixels as decompressed 16 bit blocks
                     for (int by = 0; by < 8; by += 4)
                     {
                         for (int bx = 0; bx < 8; bx += 4)

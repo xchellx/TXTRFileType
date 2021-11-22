@@ -77,9 +77,12 @@ namespace TXTRFileType
 
         private void CheckControls()
         {
-            if (textureFormatComboBox.SelectedIndex < 0) textureFormatComboBox.SelectedIndex = 0;
-            if (paletteFormatComboBox.SelectedIndex < 0) paletteFormatComboBox.SelectedIndex = 0;
-            if (paletteLengthCopyLocationComboBox.SelectedIndex < 0) paletteLengthCopyLocationComboBox.SelectedIndex = 0;
+            if (textureFormatComboBox.SelectedIndex < 0)
+                textureFormatComboBox.SelectedIndex = 0;
+            if (paletteFormatComboBox.SelectedIndex < 0)
+                paletteFormatComboBox.SelectedIndex = 0;
+            if (paletteLengthCopyLocationComboBox.SelectedIndex < 0)
+                paletteLengthCopyLocationComboBox.SelectedIndex = 0;
             switch ((TextureFormat)((UIUtil.ComboBoxEnumItem<TextureFormat>)textureFormatComboBox.SelectedItem).Value)
             {
                 case TextureFormat.CI4:
