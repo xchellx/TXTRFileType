@@ -41,8 +41,8 @@ namespace TXTRFileType
         public const bool ComVisible = false;
         public const string Guid = "7afbafc5-3d1b-46f0-85ab-31a62a1b2d95";
         public const string AssemblyVersion = "1.0"; // major.minor
-        public const string AssemblyFileVersion = "1.0.0.0"; // major.minor.build.revision
-        public const string AssemblyInformationalVersion = "1.0.0"; // major.minor[.build]
+        public const string AssemblyFileVersion = "1.0.1.0"; // major.minor.build.revision
+        public const string AssemblyInformationalVersion = "1.0.1"; // major.minor[.build]
         public const string SupportedOSPlatform = "windows"; // NET 5.0+ only!
         public const string WebsiteUri = "https://www.getpaint.net/redirect/plugins.html"; // Paint.NET only!
     }
