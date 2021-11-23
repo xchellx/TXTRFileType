@@ -303,10 +303,10 @@ namespace libWiiSharp
                         {
                             for (int x1 = x; x1 < x + 4; x1++)
                             {
-                                ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
-
                                 if ((x1 >= width) || (y1 >= height))
                                     continue;
+
+                                ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                                 if (k == 0)
                                 {
@@ -400,10 +400,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                             if ((pixel & (1 << 15)) != 0)
                             {
@@ -507,10 +507,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                             int b = (((pixel >> 11) & 0x1F) << 3) & 0xff;
                             int g = (((pixel >> 5) & 0x3F) << 2) & 0xff;
@@ -581,10 +581,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1 += 2)
                         {
-                            int pixel = texture[inp++];
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            int pixel = texture[inp++];
 
                             int i = (pixel >> 4) * 255 / 15;
                             output[y1 * width + x1] = (uint)((i << 0) | (i << 8) | (i << 16) | (255 << 24));
@@ -665,10 +665,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1++)
                         {
-                            int pixel = texture[inp++];
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            int pixel = texture[inp++];
 
                             output[y1 * width + x1] = (uint)((pixel << 0) | (pixel << 8) | (pixel << 16) | (255 << 24));
                         }
@@ -734,10 +734,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1++)
                         {
-                            int pixel = texture[inp++];
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            int pixel = texture[inp++];
 
                             int i = ((pixel & 0x0F) * 255 / 15) & 0xff;
                             int a = (((pixel >> 4) * 255) / 15) & 0xff;
@@ -809,10 +809,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            int pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            int pixel = Shared.Swap(BitConverter.ToUInt16(texture, inp++ * 2));
 
                             uint a = (uint)(pixel >> 8);
                             uint i = (uint)(pixel & 0xff);
@@ -888,10 +888,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1 += 2)
                         {
-                            byte pixel = texture[i++];
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            byte pixel = texture[i++];
 
                             output[y1 * width + x1] = paletteData[pixel >> 4]; ;
                             if (y1 * width + x1 + 1 < output.Length) output[y1 * width + x1 + 1] = paletteData[pixel & 0x0F];
@@ -920,10 +920,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 8; x1++)
                         {
-                            ushort pixel = texture[i++];
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            ushort pixel = texture[i++];
 
                             output[y1 * width + x1] = paletteData[pixel];
                         }
@@ -951,10 +951,10 @@ namespace libWiiSharp
                     {
                         for (int x1 = x; x1 < x + 4; x1++)
                         {
-                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, i++ * 2));
-
                             if (y1 >= height || x1 >= width)
                                 continue;
+
+                            ushort pixel = Shared.Swap(BitConverter.ToUInt16(texture, i++ * 2));
 
                             output[y1 * width + x1] = paletteData[pixel & 0x3FFF];
                         }
