@@ -29,8 +29,6 @@ using System.Text;
 using TXTRFileType.IO;
 using TXTRFileType.Util;
 
-// TODO: Figure out why some textures come out incorrect, like "D:\From Desktop\TXTRSearch\MP2Paks\FrontEnd-pak\2973876d.TXTR"
-
 namespace TXTRFileType
 {
     public sealed class TXTRFileTypeFactory : IFileTypeFactory
