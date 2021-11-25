@@ -29,6 +29,8 @@ using System.Text;
 using TXTRFileType.IO;
 using TXTRFileType.Util;
 
+// TODO: Figure out why some textures come out incorrect, like "D:\From Desktop\TXTRSearch\MP2Paks\FrontEnd-pak\2973876d.TXTR"
+
 namespace TXTRFileType
 {
     public sealed class TXTRFileTypeFactory : IFileTypeFactory
@@ -62,19 +64,10 @@ namespace TXTRFileType
         }
 
         protected override SaveConfigToken OnCreateDefaultSaveConfigToken()
-        {
-            return new TXTRFileTypeSaveConfigToken();
-        }
+            => TXTRFileTypeSaveConfigToken.GetDefault();
 
         public override SaveConfigWidget CreateSaveConfigWidget()
-        {
-            return new TXTRFileTypeSaveConfigWidget();
-        }
-
-        /// <summary>
-        /// The minimum size a mipmap can reach by width and height
-        /// </summary>
-        private const int sizeLimit = 4;
+            => new TXTRFileTypeSaveConfigWidget();
 
         /// <summary>
         /// Saves a document to a stream respecting the properties
@@ -88,8 +81,9 @@ namespace TXTRFileType
             TXTRFileTypeSaveConfigToken configToken = (TXTRFileTypeSaveConfigToken)token;
             TextureFormat textureFormat = configToken.TextureFormat;
             PaletteFormat paletteFormat = configToken.TexturePalette;
-            bool generateMipmaps = configToken.GenerateMipmaps;
             TextureConverter.PaletteLengthCopyLocation paletteLengthCopyLocation = configToken.PaletteLengthCopyLocation;
+            bool generateMipmaps = configToken.GenerateMipmaps;
+            int mipSizeLimit = configToken.MipSizeLimit;
 
             bool isIndexed = (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2);
 
@@ -98,7 +92,13 @@ namespace TXTRFileType
             // Mipmaps make no sense with indexed formats, especially with how TXTR is structured. Plus, there is not
             // a single example of a TXTR with an indexed format that includes mipmaps.
             if (generateMipmaps && !isIndexed)
-                mipCount = ImageUtil.CountMips(input.Width, input.Height, sizeLimit);
+            {
+                mipCount = ImageUtil.CountMips(input.Width, input.Height, mipSizeLimit);
+                // Make sure mipcount does not exceed minsize
+                int maxMipCount = ImageUtil.CountMips(input.Width, input.Height, 1);
+                if (mipCount > maxMipCount)
+                    mipCount = maxMipCount;
+            }
 
             int maxProgress = mipCount;
             int curProgress = 0;
@@ -228,8 +228,8 @@ namespace TXTRFileType
                 for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
                 {
                     Debug.WriteLine("Decoding mipmap {0}: width = {1}, height = {2}", mipLevel + 1, mipWidth, mipHeight);
-                    if (mipWidth < sizeLimit || mipHeight < sizeLimit)
-                        throw new InvalidDataException($"Mip {mipLevel + 1}: Width or Height less than {sizeLimit}. Mipmap count may be invalid.");
+                    if (mipWidth < 1 || mipHeight < 1)
+                        throw new InvalidDataException($"Mip {mipLevel + 1}: Width or Height less than 1. Mipmap count may be invalid.");
                     // Would be mipWidth and mipHeight but Paint.NET doesn't allow layers smaller than the image size.
                     // However, this doesn't really matter in the end.
                     BitmapLayer layer = PDNUtil.CreateLayer(textureWidth, textureHeight, $"Mipmap {mipLevel + 1}");

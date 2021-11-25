@@ -42,7 +42,7 @@ namespace TXTRFileType.Util
         {
             List<ComboBoxEnumItem<TEnum>> list = Enum.GetValues(typeof(TEnum))
                 .Cast<TEnum>()
-                .Select(value => ComboBoxEnumItem<TEnum>.CreateComboBoxEnumItem(value))
+                .Select(value => ComboBoxEnumItem<TEnum>.Create(value))
                 .OrderBy(item => sort ? item.Value.ToString() : string.Empty)
                 .ToList();
 
@@ -62,12 +62,27 @@ namespace TXTRFileType.Util
             public string Title { get; private set; }
             public TEnum Value { get; private set; }
 
-            public static ComboBoxEnumItem<TEnum> CreateComboBoxEnumItem(TEnum value) => new ComboBoxEnumItem<TEnum>()
+            public static ComboBoxEnumItem<TEnum> Create(TEnum value) => new ComboBoxEnumItem<TEnum>()
             {
                 Title = (Attribute.GetCustomAttribute(value.GetType().GetField(value.ToString()),
                     typeof(EnumTitleForComboBoxAttribute)) as EnumTitleForComboBoxAttribute)?.Title ?? value.ToString(),
                 Value = value
             };
+
+            public override bool Equals(object obj)
+            {
+                return obj is ComboBoxEnumItem<TEnum> item &&
+                       Title == item.Title &&
+                       EqualityComparer<TEnum>.Default.Equals(Value, item.Value);
+            }
+
+            private int? hashCache = null;
+            public override int GetHashCode()
+            {
+                if (!hashCache.HasValue)
+                    hashCache = HashCode.Combine(Title, Value);
+                return hashCache.Value;
+            }
         }
 
         /// <summary>
@@ -106,7 +121,7 @@ namespace TXTRFileType.Util
             /// </summary>
             protected string TitleValue { get; set; }
 
-            public override bool Equals([NotNullWhen(true)] object? obj) =>
+            public override bool Equals([NotNullWhen(true)] object obj) =>
                 obj is EnumTitleForComboBoxAttribute other && other.Title == Title;
 
             private int? hashCache = null;

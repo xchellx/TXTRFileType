@@ -24,12 +24,13 @@ using System;
 namespace TXTRFileType
 {
     [Serializable]
-    internal class TXTRFileTypeSaveConfigToken : SaveConfigToken
+    internal class TXTRFileTypeSaveConfigToken : SaveConfigToken, ICloneable
     {
-        public TextureFormat TextureFormat { get; set; }
-        public PaletteFormat TexturePalette { get; set; }
-        public TextureConverter.PaletteLengthCopyLocation PaletteLengthCopyLocation { get; set; }
-        public bool GenerateMipmaps { get; set; }
+        public TextureFormat TextureFormat { get; set; } = TextureFormat.I4;
+        public PaletteFormat TexturePalette { get; set; } = PaletteFormat.IA8;
+        public TextureConverter.PaletteLengthCopyLocation PaletteLengthCopyLocation { get; set; } = TextureConverter.PaletteLengthCopyLocation.ToWidth;
+        public bool GenerateMipmaps { get; set; } = false;
+        public int MipSizeLimit { get; set; } = 1;
 
         public TXTRFileTypeSaveConfigToken()
         {
@@ -37,11 +38,24 @@ namespace TXTRFileType
             TexturePalette = PaletteFormat.IA8;
             PaletteLengthCopyLocation = TextureConverter.PaletteLengthCopyLocation.ToWidth;
             GenerateMipmaps = false;
+            MipSizeLimit = 1;
         }
 
         public override object Clone()
         {
-            return MemberwiseClone();
+            return MipSizeLimit == default(int) ? GetDefault() : MemberwiseClone();
+        }
+
+        public static TXTRFileTypeSaveConfigToken GetDefault()
+        {
+            return new TXTRFileTypeSaveConfigToken()
+            {
+                TextureFormat = TextureFormat.I4,
+                TexturePalette = PaletteFormat.IA8,
+                PaletteLengthCopyLocation = TextureConverter.PaletteLengthCopyLocation.ToWidth,
+                GenerateMipmaps = false,
+                MipSizeLimit = 1
+            };
         }
     }
 }
