@@ -1,42 +1,121 @@
 # TXTRFileType
-TXTR file type plugin for Paint.NET to load TXTR files from the Metroid Prime series.
-With this you'll be able to extract, edit, and create TXTR texture files for or from the Metroid prime series.
+TXTRFileType is a collection of various tools, interfaces, and plugins to read and write TXTR files
+from the Metroid Prime series.
 
-**Note:** GX2 support is not included and not planned therefore TXTR files from Donkey Kong Country: Tropical Freeze is not supported. This is open for contributions, however.
+**Note:** GX2 support is not included and not planned therefore TXTR files from Donkey Kong Country:
+Tropical Freeze is not supported. This is open for contributions, however.
 
 ## Features
 - Supports loading and saving all texture formats
 - Supports loading and generating mipmaps
 - Automatic image coordinate flipping
+- A managed library TXTRFileTypeLib
+- A command line program that interfaces with TXTRFileTypeLib
+- A unmanaged library libtxtr that interfaces with TXTRFileTypeLib (cdecl calling convention)
+- A python library libtxtrPython (libtxtr) that interfaces with libtxtr
+- A plugin for Paint.NET
+- A plugin for Krita (supports Windows x64 and Linux x64)
 
 ## Building
 ### Requirements
-- Visual Studio 2019 or greater. [Get it here](https://visualstudio.microsoft.com/downloads/).
+- Visual Studio 2022. [Get it here](https://visualstudio.microsoft.com/downloads/).
 - .NET 6.0 SDK. [Get it here](https://dotnet.microsoft.com/download/dotnet/6.0).
 - Paint.NET (installed, store, or portable version). [Get it from the official website](https://www.getpaint.net) or [the Microsoft Store](https://www.microsoft.com/en-us/p/paintnet/9nbhcs1lx4r0).
+- A Windows OS to build libtxtr for Windows
+- A Linux OS to build libtxtr for Linux
 
-After building, you should copy the DLL of the plugin, it's .deps.json file, and all the DLLs required specified inside the `"dependencies":` entry inside the .deps.json to `%PDNINSTALLDIR%\FileTypes\TXTRFileType`.
+### TXTRFileTypeLib
+#### Building TXTRFileTypeLib
+Select Release and AnyCPU for the configuration then build.
 
-### Environment Variables And Post Build Event
-There is a post build event that copies the plugin's .dll and .deps.json to the plugin directory (as well as creating this directory).
+#### Installing TXTRFileTypeLib
+After building, copy TXTRFileTypeLib.dll, TXTRFileTypeLib.deps.json file, and all the dependencies
+required specified inside the `"dependencies":` entry inside TXTRFileTypeLib.deps.json to wherever
+you need to use TXTRFileTypeLib.
 
-The dependencies specified in .deps.json (and for the dependencies of the dependencies of their selves) must always be manually copied to the plugin directory.
+### TXTRFileType
+#### Building TXTRFileType
+The debug start action and library includes expect everything to be in `C:\Program Files\paint.net`.
+If you installed Paint.NET to somewhere else or installed the Microsoft Store version, then you must
+edit the csproj to reflect the location to where you installed it. Select Release and AnyCPU for the
+configuration then build.
 
-If this post build event is disabled, then plugin DLL and .deps.json file must be manually copied to the plugin directory.
+#### Installing TXTRFileType
+After building, copy TXTRFileType.dll, TXTRFileType.deps.json file, and all the dependencies
+required specified inside the `"dependencies":` entry inside TXTRFileType.deps.json to
+`<PDNINSTALLDIR>\FileTypes\TXTRFileType` where `<PDNINSTALLDIR>` is the location Paint.NET, such as
+`C:\Program Files\paint.net`.
 
-The project and the post build event depends on some environment variables:
+### TXTRFileTypeCLI
+#### Building TXTRFileTypeCLI
+Right click the .csproj and click publish then choose the required configuration and click publish.
 
-- Set the environment variable `PDNINSTALLDIR` to where you have paint.net installed, whether that be the path to the installed version, portable version, or store version. Example: `C:\Program Files\paint.net` (no leading backslash). This is required for the PostBuild event and for the paint.net DLL references.
-- Set the environment variable `PDNENABLEPBE` to 'true' to enable post build event and set to `"false"` disable it. Unless you are debugging, set to `"false"` otherwise keep it `"true"`.
-- Set the environment variable `PDNPLUGINTYPE` to `"FileType"` or `"Effect"` according to what type of plugin you are making. This is required to prevent post build event from failing. For this plugin, it's a FileType so set to `"FileType"`.
+##### NOTE:
+Do not strip the executable on Linux, the extra data in it is compressed libraries of the dotnet
+runtime and other dependecies which need to be decompressed to memory at runtime (thus allowing the
+executable to be self contained)
 
-You can set this variables using either the `SETX` command or `Control Panel -> System -> Advanced System Properties -> Environment Variables`
+#### Installing TXTRFileTypeCLI
+After building, copy the txtrtool.exe to wherever you need to use TXTRFileTypeCLI, copy txtrtool
+to your OS's binary directory, and/or add txtrtool to your OS's PATH environment variable.
 
-With the `SETX` command, it's as simple as `SETX VARIABLENAME "VARIABLECONTENT"` where `VARIABLENAME` is the name of the variable to set and `VARIABLECONTENT` is the value of the variable to set.
+### libtxtr
+#### Building libtxtr
+An experimental IL compiler required which is only supported by dotnet CLI (at the time of writing).
+Do not use VS2022 to publish, use 'dotnet publish' instead. This compiler is available in the
+`Microsoft.DotNet.ILCompiler` nuget package, which is in a custom nuget source. Two scripts are
+provided for convenience: `publish_win-x64.bat` for building libtxtr for Windows and
+`publish_linux-x64.sh` for building libtxtr for Linux.
+##### Note:
+Cross compiling is not possible yet for native AOT. You must build for Windows on Windows and for
+Linux on Linux. You cant build for one from the other and vice versa.
 
-With the `Control Panel` method, you just click `New` then fill in `Variable name:` and `Variable value:` and press OK.
+You can technically build libtxtr normally for use with COM interop or just normal use but there
+isn't much benefit for that aswell as it is not a supported use case here.
 
-After adding the environment variables, restart Visual Studio if you had it open when doing this. If the variables still do not resolve, force close `explorer.exe` and restart it. If still not working, restart your PC.
+The required nuget package for compiling to native AOT (`Microsoft.DotNet.ILCompiler`) is found at
+the dotnet-experimental custom nuget source.
+
+Also, x86 is not possible for native AOT yet; see https://github.com/dotnet/corert/issues/4589 and
+https://github.com/dotnet/runtimelab/blob/feature/NativeAOT/src/installer/pkg/projects/Microsoft.DotNet.ILCompiler/ILCompilerRIDs.props
+
+##### dotnet-experimental nuget source info:
+- **Name**: dotnet-experimental
+- **Source**: https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-experimental/nuget/v3/index.json
+##### More Info on Native AOT
+- https://github.com/dotnet/corert/tree/master/samples/NativeLibrary
+- https://github.com/dotnet/runtimelab/tree/feature/NativeAOT/samples/NativeLibrary
+- https://github.com/dotnet/corert/blob/master/Documentation/how-to-build-and-run-ilcompiler-in-console-shell-prompt.md
+- https://github.com/dotnet/runtimelab/blob/feature/NativeAOT/docs/using-nativeaot/README.md
+- https://coderator.net/c-experimental-serisi-native-kutuphane-derliyoruz/
+- http://web.archive.org/web/20210222045218/https://coderator.net/c-experimental-serisi-native-kutuphane-derliyoruz/
+##### Soutions for Common Problems with Native AOT
+- https://github.com/dotnet/corert/issues/5742
+- https://github.com/dotnet/corert/issues/6282
+- https://github.com/dotnet/corert/issues/5289
+- https://github.com/dotnet/runtimelab/issues/589
+
+#### Installing libtxtr
+After building, copy the library to wherever you need to use libtxtr.
+
+### libtxtrPython
+#### Building libtxtrPython
+No building is required.
+
+#### Installing libtxtrPython
+Simply copy libtxtrPython.py to wherever you need use libtxtrPython.
+
+### TXTRFileTypeKrita
+#### Building TXTRFileTypeKrita
+No building is required for TXTRFileTypeKrita but libtxtr is required so that must be built.
+
+#### Installing TXTRFileTypeKrita
+Copy TXTRFileTypeKrita.desktop, the TXTRFileTypeKrita folder, and libtxtr.dll/libtxtr.so to
+`%APPDATA%\krita\pykrita` on Windows and `~/.local/share/krita/pykrita` on Linux. Then, in Krita, go
+to `Settings` -> `Configure Krita...` then click on `Python Plugin Manager` find
+`TXTR Import/Export` and tick the checkbox next it. Restart Krita and go to `Settings` -> `Dockers`
+then find `TXTR Import/Export` and tick the checkbox next to it. You should see the
+`TXTR Import/Export` dock on the right side.
 
 ## License
 ```

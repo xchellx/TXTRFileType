@@ -16,36 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using libWiiSharp;
 using libWiiSharp.Formats;
 using PaintDotNet;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
-using TXTRFileType.IO;
+using System.Windows.Forms;
 using TXTRFileType.Util;
+using TXTRFileTypeLib;
 
 namespace TXTRFileType
 {
-    public sealed class TXTRFileTypeFactory : IFileTypeFactory
+    [PluginSupportInfo(typeof(TXTRPluginSupportInfo))]
+    public class TXTRFileType : FileType<TXTRSaveConfigToken, TXTRSaveConfigWidget>
     {
-        public FileType[] GetFileTypeInstances()
-        {
-            return new FileType[] { new TXTRFileTypePlugin() };
-        }
-    }
-
-    [PluginSupportInfo(typeof(PluginSupportInfo))]
-    internal class TXTRFileTypePlugin : FileType
-    {
-        /// <summary>
-        /// Constructs a TXTRFileTypePlugin instance
-        /// </summary>
-        internal TXTRFileTypePlugin()
+        public TXTRFileType()
             : base(
                 "Metroid Prime Texture",
                 new FileTypeOptions
@@ -61,202 +48,119 @@ namespace TXTRFileType
         {
         }
 
-        protected override SaveConfigToken OnCreateDefaultSaveConfigToken()
-            => TXTRFileTypeSaveConfigToken.GetDefault();
+        protected override TXTRSaveConfigToken OnCreateDefaultSaveConfigTokenT()
+            => TXTRSaveConfigToken.GetDefault();
 
-        public override SaveConfigWidget CreateSaveConfigWidget()
-            => new TXTRFileTypeSaveConfigWidget();
+        protected override TXTRSaveConfigWidget OnCreateSaveConfigWidgetT()
+#if DESIGNER
+            => new();
+#else
+            => new(this);
+#endif
 
-        /// <summary>
-        /// Saves a document to a stream respecting the properties
-        /// </summary>
-        protected override void OnSave(Document input, Stream output, SaveConfigToken token, Surface scratchSurface, ProgressEventHandler progressCallback)
+        protected override void OnSaveT(Document input, Stream output, TXTRSaveConfigToken token,
+            Surface scratchSurface, ProgressEventHandler progressCallback)
         {
-            // Publish progress function convenience function
-            Action<double> progressCallbackFunc = (p) => { if (progressCallback != null) progressCallback(null, new ProgressEventArgs(p, true)); };
-            
-            // Get save configuration values from token
-            TXTRFileTypeSaveConfigToken configToken = (TXTRFileTypeSaveConfigToken)token;
-            TextureFormat textureFormat = configToken.TextureFormat;
-            PaletteFormat paletteFormat = configToken.TexturePalette;
-            TextureConverter.PaletteLengthCopyLocation paletteLengthCopyLocation = configToken.PaletteLengthCopyLocation;
-            bool generateMipmaps = configToken.GenerateMipmaps;
-            int mipSizeLimit = configToken.MipSizeLimit;
+            void UpdateProgress(double progress, double max)
+                => progressCallback?.Invoke(null, new ProgressEventArgs(Math.Floor((progress / max) * 100.0d), false));
+            Surface inputImage = ((BitmapLayer)input.Layers[0]).Surface;
 
-            bool isIndexed = (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2);
-
-            // Count mipamps
-            int mipCount = 1;
-            // Mipmaps make no sense with indexed formats, especially with how TXTR is structured. Plus, there is not
-            // a single example of a TXTR with an indexed format that includes mipmaps.
-            if (generateMipmaps && !isIndexed)
+            using (Image<Bgra32> outputImage = new(inputImage.Width, inputImage.Height))
             {
-                mipCount = ImageUtil.CountMips(input.Width, input.Height, mipSizeLimit);
-                // Make sure mipcount does not exceed minsize
-                int maxMipCount = ImageUtil.CountMips(input.Width, input.Height, 1);
-                if (mipCount > maxMipCount)
-                    mipCount = maxMipCount;
-            }
-
-            int maxProgress = mipCount;
-            int curProgress = 0;
-
-            // The stream paint.net hands us must not be closed.
-            // TXTR is in big endian
-            using (EndianBinaryWriter bw = new EndianBinaryWriter(output, false, Encoding.Unicode, true))
-            {
-                ushort mipWidth = (ushort)input.Width;
-                ushort mipHeight = (ushort)input.Height;
-
-                // Write header
-                bw.Write((uint)textureFormat);
-                bw.Write((ushort)input.Width);
-                bw.Write((ushort)input.Height);
-                bw.Write((uint)mipCount);
-
-                // Load pixels to image
-                // Only use the first layer, as mipmaps have to generate from the base (largest) layer
-                using (Image<Bgra32> imgPdn = ImageUtil.ToImage<Bgra32>(((BitmapLayer)input.Layers[0]).Surface.Scan0.ToByteArray(),
-                    mipWidth, mipHeight))
+                for (int y = 0; y < outputImage.Height; y++)
                 {
-                    // Do not flip indexed formats, the texture converter does the flipping for us at load
-                    if (!isIndexed)
-                        imgPdn.Mutate(x => x.Flip(FlipMode.Vertical));
-                    (byte[] textureData, byte[] paletteData, ushort paletteWidth, ushort paletteHeight)
-                        = TextureConverter.CreateTexture(textureFormat, paletteFormat, paletteLengthCopyLocation, imgPdn);
-
-                    // Write palette
-                    if (isIndexed)
+                    Span<Bgra32> outputImageRow = outputImage.GetPixelRowSpan(y);
+                    for (int x = 0; x < outputImageRow.Length; x++)
                     {
-                        bw.Write((uint)paletteFormat);
-                        bw.Write((ushort)paletteWidth);
-                        bw.Write((ushort)paletteHeight);
-                        bw.Write(paletteData);
-                    }
-
-                    // Write main image
-                    bw.Write(textureData);
-                    ++curProgress;
-                    progressCallbackFunc((curProgress / maxProgress) * 100);
-
-                    // Write mipmaps
-                    for (int mipLevel = 0; mipLevel < mipCount - 1; mipLevel++)
-                    {
-                        mipWidth = (ushort)Math.Ceiling((double)mipWidth / 2);
-                        mipHeight = (ushort)Math.Ceiling((double)mipHeight / 2);
-
-                        // Resize image with box filter 
-                        imgPdn.Mutate(x => x.Resize(new ResizeOptions()
-                        {
-                            Mode = ResizeMode.Min,
-                            Size = new Size(mipWidth, mipHeight),
-                            Sampler = KnownResamplers.Box,
-                            Compand = true,
-                            PremultiplyAlpha = false // This is handled by the texture converter
-                        }));
-
-                        // Write mip image
-                        (byte[] mipData, _, _, _) = TextureConverter.CreateTexture(textureFormat, paletteFormat,
-                            paletteLengthCopyLocation, imgPdn);
-                        bw.Write(mipData);
-                        ++curProgress;
-                        progressCallbackFunc((curProgress / maxProgress) * 100);
+                        ref Bgra32 outputImagePixel = ref outputImageRow[x];
+                        outputImagePixel.R = inputImage[x, y].R;
+                        outputImagePixel.G = inputImage[x, y].G;
+                        outputImagePixel.B = inputImage[x, y].B;
+                        outputImagePixel.A = inputImage[x, y].A;
                     }
                 }
+
+                TXTRFileTypeLibAPI.Write(outputImage,
+                    output,
+                    token.TextureFormat,
+                    token.PaletteFormat,
+                    token.CopyPaletteSize,
+                    token.GenerateMipmaps
+                    && token.TextureFormat != TextureFormat.CI4
+                    && token.TextureFormat != TextureFormat.CI8
+                    && token.TextureFormat != TextureFormat.CI14X2,
+                    token.MipmapWidthLimit,
+                    token.MipmapHeightLimit,
+                    true,
+                    UpdateProgress);
             }
         }
 
-        /// <summary>
-        /// Creates a document from a stream
-        /// </summary>
         protected override Document OnLoad(Stream input)
         {
-            // The stream paint.net hands us must not be closed.
-            // TXTR is in big endian
-            using (EndianBinaryReader br = new EndianBinaryReader(input, false, Encoding.Unicode, true))
+            bool readMipmaps = false;
+            // Checking the current StackTrace frame(s) is the only way to check if
+            // a load is a preview or an actual load. Limit the check to 4 frames up.
+            for (int i = 0; i < 4; i++)
             {
-                // Read header
-                TextureFormat textureFormat = (TextureFormat)br.ReadUInt32();
-                Debug.WriteLine("{0} = {1}", nameof(textureFormat), textureFormat);
-                ushort textureWidth = br.ReadUInt16();
-                Debug.WriteLine("{0} = {1}", nameof(textureWidth), textureWidth);
-                ushort textureHeight = br.ReadUInt16();
-                Debug.WriteLine("{0} = {1}", nameof(textureHeight), textureHeight);
-                uint mipCount = br.ReadUInt32();
-                if (mipCount < 1)
-                    throw new InvalidDataException($"Invalid mipmap count: '{mipCount}'");
-                Debug.WriteLine("{0} = {1}", nameof(mipCount), mipCount);
-                if (textureWidth < 1 || textureHeight < 1)
-                    throw new InvalidDataException($"Invalid dimensions: width='{textureWidth}', height={textureHeight}");
+                string callingClassName = new StackTrace().GetFrame(i + 1)?.GetMethod()?.ReflectedType
+                    ?.FullName?.ToLower() ?? string.Empty;
 
-                Document document = new Document(textureWidth, textureHeight);
-                bool isIndexed = (textureFormat == TextureFormat.CI4 || textureFormat == TextureFormat.CI8 || textureFormat == TextureFormat.CI14X2);
-
-                // Read palette
-                PaletteFormat paletteFormat = PaletteFormat.IA8;
-                ushort paletteWidth = 0;
-                ushort paletteHeight = 0;
-                int paletteSize = 0;
-                byte[] paletteData = Array.Empty<byte>();
-                if (isIndexed)
+                if (callingClassName.Contains("paintdotnet")
+                    && (callingClassName.Contains("save") || callingClassName.Contains("preview")))
                 {
-                    paletteFormat = (PaletteFormat)br.ReadUInt32();
-                    Debug.WriteLine("{0} = {1}", nameof(paletteFormat), paletteFormat);
-                    paletteWidth = br.ReadUInt16();
-                    Debug.WriteLine("{0} = {1}", nameof(paletteWidth), paletteWidth);
-                    paletteHeight = br.ReadUInt16();
-                    Debug.WriteLine("{0} = {1}", nameof(paletteHeight), paletteHeight);
-
-                    // Palette size is actually determined by the palette width and height.
-                    // The assumption of CI14X2 = 16384, CI8 = 256, and CI4 = 16 is that of the maximum size. However, the
-                    // actual size can be smaller than the maximum size depending on how much of the colors where converted.
-                    paletteSize = (paletteWidth * paletteHeight) * 2;
-                    if ((paletteSize > (16 * 2) && textureFormat == TextureFormat.CI4)
-                        || (paletteSize > (256 * 2) && textureFormat == TextureFormat.CI8)
-                        || (paletteSize > (16384 * 2) && textureFormat == TextureFormat.CI14X2))
-                        throw new InvalidDataException("Palette data exceeds maximum palette size)");
-                    paletteData = br.ReadBytes(paletteSize);
+                    readMipmaps = true;
+                    break;
                 }
-                if (paletteSize != 0 && paletteData.Length == 0)
-                    throw new InvalidDataException("Palette data is empty");
+            }
+            if (!readMipmaps)
+            {
+                readMipmaps = MessageBox.Show(new Win32Window(Process.GetCurrentProcess()),
+                    "Read all mipmaps from the TXTR?", "TXTR Read Question", MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+            }
+            Image<Bgra32>[] inputImages = TXTRFileTypeLibAPI.Read(input, readMipmaps, true);
 
-                // Read main image and mipmaps
-                ushort mipWidth = textureWidth;
-                ushort mipHeight = textureHeight;
-                for (int mipLevel = 0; mipLevel < mipCount; mipLevel++)
+            if (inputImages.Length > 0)
+            {
+                Document output = new(inputImages[0].Width, inputImages[0].Height);
+
+                int i = 0;
+                foreach (Image<Bgra32> inputImage in inputImages)
                 {
-                    Debug.WriteLine("Decoding mipmap {0}: width = {1}, height = {2}", mipLevel + 1, mipWidth, mipHeight);
-                    if (mipWidth < 1 || mipHeight < 1)
-                        throw new InvalidDataException($"Mip {mipLevel + 1}: Width or Height less than 1. Mipmap count may be invalid.");
-                    // Would be mipWidth and mipHeight but Paint.NET doesn't allow layers smaller than the image size.
-                    // However, this doesn't really matter in the end.
-                    BitmapLayer layer = PDNUtil.CreateLayer(textureWidth, textureHeight, $"Mipmap {mipLevel + 1}");
-
-                    // Convert image data and load it
-                    using (Image<Bgra32> image = TextureConverter.ExtractTexture(textureFormat, paletteFormat,
-                        br.ReadBytes(TextureConverter.GetTextureSize(textureFormat, mipWidth, mipHeight)),
-                        paletteData, mipWidth, mipHeight))
+                    // Would be mipmap.Width and mipmap.Height but Paint.NET doesn't allow layers
+                    // smaller than the image size. However, this doesn't really matter in the end.
+                    BitmapLayer outputImage = new(output.Width, output.Height, ColorBgra.Transparent)
                     {
-                        // Write converted pixel data to Paint.NET layer
-                        for (int y = 0; y < image.Height; y++)
+                        Name = $"Mipmap {++i}"
+                    };
+
+                    using (inputImage)
+                    {
+                        for (int y = 0; y < inputImage.Height; y++)
                         {
-                            Span<Bgra32> row = image.GetPixelRowSpan(y);
-                            for (int x = 0; x < row.Length; x++)
+                            Span<Bgra32> inputImageRow = inputImage.GetPixelRowSpan(y);
+                            for (int x = 0; x < inputImageRow.Length; x++)
                             {
-                                ref Bgra32 pixel = ref row[x];
-                                // Do not flip indexed formats, the texture converter does the flipping for us at load
-                                PDNUtil.SetPixel(ref layer, x, y, false, !isIndexed, pixel.R, pixel.G, pixel.B, pixel.A);
+                                ref Bgra32 inputImagePixel = ref inputImageRow[x];
+
+                                ColorBgra outputImagePixel = outputImage.Surface[x, y];
+                                outputImagePixel.R = inputImagePixel.R;
+                                outputImagePixel.G = inputImagePixel.G;
+                                outputImagePixel.B = inputImagePixel.B;
+                                outputImagePixel.A = inputImagePixel.A;
+                                outputImage.Surface[x, y] = outputImagePixel;
                             }
                         }
                     }
 
-                    document.Layers.Add(layer);
-                    mipWidth = (ushort)Math.Ceiling((double)mipWidth / 2);
-                    mipHeight = (ushort)Math.Ceiling((double)mipHeight / 2);
+                    output.Layers.Add(outputImage);
                 }
 
-                return document;
+                return output;
             }
+            else
+                throw new InvalidOperationException("No image data was loaded");
         }
     }
 }

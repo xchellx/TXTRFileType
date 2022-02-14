@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=TXTRFileTypeKrita
+X-Krita-Manual=Manual.html
+X-Python-2-Compatible=false
+Name=TXTR Import/Export
+Comment=Can import and/or export TXTR files from the Metroid Prime series

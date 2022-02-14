@@ -1,0 +1,98 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <NativeLib>Shared</NativeLib>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Platforms>x64</Platforms>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Configurations>Release</Configurations>
+    <AssemblyName>libtxtr</AssemblyName>
+    <AssemblyTitle>TXTRFileTypeLib Introp Assembly</AssemblyTitle>
+    <RootNamespace>libtxtr</RootNamespace>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageId>libtxtr</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Yonder</Authors>
+    <Company>Yonder</Company>
+    <Product>libtxtr</Product>
+    <Description>Native interop library to interact with TXTRFileTypeLib</Description>
+    <Copyright>Copyright © Yonder 2021</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/xchellx/TXTRFileType</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/xchellx/TXTRFileType.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <RestoreSources>
+      https://api.nuget.org/v3/index.json
+    </RestoreSources>
+    <RestoreAdditionalProjectSources>
+      https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-experimental/nuget/v3/index.json
+    </RestoreAdditionalProjectSources>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-alpha.1.22074.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
+  </ItemGroup>
+  
+  <!-- START NativeLib optimization settings -->
+  <PropertyGroup>
+    <IlcDisableReflection>true</IlcDisableReflection>
+    <IlcGenerateCompleteTypeMetadata>true</IlcGenerateCompleteTypeMetadata>
+    <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
+    <IlcTrimMetadata>true</IlcTrimMetadata>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <DebuggerSupport>false</DebuggerSupport>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+    <UseSystemResourceKeys>false</UseSystemResourceKeys>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+  </PropertyGroup>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Switch.System.Reflection.Disabled.DoNotThrowForNames" Value="true" />
+    <RuntimeHostConfigurationOption Include="Switch.System.Reflection.Disabled.DoNotThrowForAttributes" Value="true" />
+  </ItemGroup>
+  <!-- END NativeLib optimization settings -->
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TXTRFileTypeLib\TXTRFileTypeLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="libtxtr.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -3,6 +3,7 @@
     "TXTRFileType": {
       "commandName": "Executable",
       "executablePath": "C:\\Program Files\\paint.net\\paintdotnet.exe",
+      "commandLineArgs": "help -yfmvc -o \"C:\\Users\\John_Nathaniel\\Desktop\\46434ed3-TXTR\" -p txtr_ -s _mipmap \"D:\\From Desktop\\TXTRSearch\\MP1Paks\\NoARAM-pak\\46434ed3.TXTR\"",
       "workingDirectory": "C:\\Program Files\\paint.net"
     }
   }

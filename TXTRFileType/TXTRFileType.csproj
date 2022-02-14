@@ -3,39 +3,50 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Platforms>AnyCPU</Platforms>
+    <Prefer32Bit>false</Prefer32Bit>
     <UseWindowsForms>true</UseWindowsForms>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
-    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
-    <GenerateAssemblyTrademarkAttribute>false</GenerateAssemblyTrademarkAttribute>
-    <GenerateAssemblyCultureAttribute>false</GenerateAssemblyCultureAttribute>
-    <GenerateAssemblyComVisibleAttribute>false</GenerateAssemblyComVisibleAttribute>
-    <GenerateAssemblyGuidAttribute>false</GenerateAssemblyGuidAttribute>
-    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
-    <GenerateSupportedOSPlatformAttribute>false</GenerateSupportedOSPlatformAttribute>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <Platforms>AnyCPU</Platforms>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Configurations>Debug;Release;Designer</Configurations>
+    <AssemblyName>TXTRFileType</AssemblyName>
+    <AssemblyTitle>TXTR FileType Plugin for Paint.NET</AssemblyTitle>
+    <RootNamespace>TXTRFileType</RootNamespace>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageId>TXTRFileType</PackageId>
+    <Version>1.1.0</Version>
+    <Authors>Yonder</Authors>
+    <Company>Yonder</Company>
+    <Product>TXTRFileType</Product>
+    <Description>Paint.NET FileType Plugin that can open TXTR files from the Metroid Prime series of games.</Description>
+    <Copyright>Copyright © Yonder 2021</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/xchellx/TXTRFileType</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/xchellx/TXTRFileType.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
   </PropertyGroup>
   
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Designer|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Designer|AnyCPU' ">
+    <DefineConstants>DEBUG;TRACE;DESIGNER</DefineConstants>
   </PropertyGroup>
   
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -45,66 +56,46 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="BCnEncoder.Net" Version="2.1.0" />
-    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
-
-  <!-- Ensure "SaveConfigWidget.cs" is compiled as a WinForms UserControl -->
+  
   <ItemGroup>
-    <Compile Update="SaveConfigWidget.cs" />
+    <ProjectReference Include="..\TXTRFileTypeLib\TXTRFileTypeLib.csproj" />
   </ItemGroup>
   
-  <!-- ENVIRONMENT VARIABLE DEPENDENT PROPERTIES -->
-  
-  <!-- Set the environment variable "PDNINSTALLDIR" to the path of your Paint.NET install directory. -->
-  <!-- This is required for the PostBuild event and for the paint.net DLL references. -->
-  <!-- Example: SETX PDNINSTALLDIR "C:\Program Files\paint.net" -->
-  
-  <!-- Set the environment variable "PDNENABLEPBE" to 'true' to enable post build event and set to 'false' disable it. -->
-  <!-- Example: SETX PDNENABLEPBE "true" -->
-  
-  <!-- Set the environment variable "PDNPLUGINTYPE" to "FileType" or "Effect" according to what type of plugin you are making. -->
-  <!-- This is required to prevent post build event from failing. -->
-  <!-- Example: SETX PDNPLUGINTYPE "FileType" -->
-
-  <!-- Start Paint.NET when you start debugger. -->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartAction>Program</StartAction>
-    <StartProgram>$(PDNINSTALLDIR)\PaintDotNet.exe</StartProgram>
-    <StartWorkingDirectory>$(PDNINSTALLDIR)\</StartWorkingDirectory>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <StartAction>Program</StartAction>
-    <StartProgram>$(PDNINSTALLDIR)\PaintDotNet.exe</StartProgram>
-    <StartWorkingDirectory>$(PDNINSTALLDIR)\</StartWorkingDirectory>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <StartAction>Program</StartAction>
-    <StartProgram>$(PDNINSTALLDIR)\PaintDotNet.exe</StartProgram>
-    <StartWorkingDirectory>$(PDNINSTALLDIR)\</StartWorkingDirectory>
-  </PropertyGroup>
-
-  <!-- Copy plugin DLL to Paint.NET plugins directory. -->
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(PDNENABLEPBE)' != 'false'">
-    <Exec Command="IF NOT EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; mkdir &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot;&#xD;&#xA;IF EXIST &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; (&#xD;&#xA;  IF EXIST &quot;$(TargetPath)&quot; (&#xD;&#xA;    COPY /Y /B &quot;$(TargetPath)&quot; /B &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; /B&#xD;&#xA;    COPY /Y /B &quot;$(TargetDir)$(TargetName).deps.json&quot; /B &quot;$(PDNINSTALLDIR)\$(PDNPLUGINTYPE)s\$(TargetName)&quot; /B&#xD;&#xA;  ) ELSE (&#xD;&#xA;    ECHO $(TargetFileName): error 0: ERROR: Failed to copy plugin to plugin directory! Check the build log.&#xD;&#xA;    EXIT /B 1&#xD;&#xA;  )&#xD;&#xA;) ELSE (&#xD;&#xA;  ECHO $(TargetFileName): error 0: ERROR: Failed to create plugin directory! Check the build log.&#xD;&#xA;  EXIT /B 1&#xD;&#xA;)" />
-  </Target>
-
-  <!-- Reference Paint.NET DLLs. -->
   <ItemGroup>
-    <Reference Include="PaintDotNet.Base" Condition="'$(PDNInstallDir)' != ''">
-      <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Base.dll</HintPath>
+    <Compile Update="TXTRSaveConfigWidget.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Designer|AnyCPU' ">
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Program Files\paint.net\PaintDotNet.exe</StartProgram>
+    <StartWorkingDirectory>C:\Program Files\paint.net\</StartWorkingDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="PaintDotNet.Base">
+      <HintPath>C:\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Core">
-      <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Core.dll</HintPath>
+      <HintPath>C:\Program Files\paint.net\PaintDotNet.Core.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Data">
-      <HintPath>$(PDNINSTALLDIR)\PaintDotNet.Data.dll</HintPath>
+      <HintPath>C:\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
