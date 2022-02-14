@@ -17,7 +17,7 @@
     <RootNamespace>TXTRFileType</RootNamespace>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageId>TXTRFileType</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>Yonder</Authors>
     <Company>Yonder</Company>
     <Product>TXTRFileType</Product>
@@ -27,8 +27,8 @@
     <PackageProjectUrl>https://github.com/xchellx/TXTRFileType</PackageProjectUrl>
     <RepositoryUrl>https://github.com/xchellx/TXTRFileType.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
   </PropertyGroup>
   
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' Or '$(Configuration)|$(Platform)' == 'Designer|AnyCPU' ">
