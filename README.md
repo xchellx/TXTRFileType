@@ -1,3 +1,5 @@
+# NOTE: This is no longer maintained, see [txtrtool](https://github.com/xchellx/txtrtool) instead.
+
 # TXTRFileType
 TXTRFileType is a collection of various tools, interfaces, and plugins to read and write TXTR files
 from the Metroid Prime series.
